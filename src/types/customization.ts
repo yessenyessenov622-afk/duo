@@ -1,0 +1,21 @@
+export type ThemeId = "light" | "dark" | "lavender" | "amber" | "mint" | "sakura" | "ocean" | "forest" | "mono";
+export type BackgroundId = "quiet" | "stars" | "library" | "sakura" | "forest" | "ocean" | "custom";
+export type VisualStyleId = "calm" | "neo-brutalist";
+export type MascotSettings = { id: string; accessory: string };
+export type CustomizationSettings = {
+  version: 2;
+  visualStyle: VisualStyleId;
+  theme: ThemeId;
+  lastLightTheme: Exclude<ThemeId, "dark">;
+  accentMode: "theme" | "custom";
+  accent: string;
+  background: BackgroundId;
+  customBackground: string;
+  fontScale: number;
+  density: "comfortable" | "compact";
+  mascot: MascotSettings;
+  animations: boolean;
+  sounds: boolean;
+  quoteFrequency: "often" | "sometimes" | "minimal";
+  largeText: boolean;
+};

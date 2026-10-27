@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f7f4">
+  <meta name="description" content="KiraQuest — небольшие учебные приключения, которые помогают двигаться вперёд шаг за шагом.">
+  <title>Учёба в своём ритме</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="welcome.css">
+</head>
+<body>
+  <div class="app-shell" id="app">
+    <aside class="sidebar" aria-label="Главная навигация">
+      <a class="brand" href="#home" aria-label="На главную"><span class="brand-mark">k</span><span id="app-name"></span></a>
+      <div class="side-label">ТВОЁ ПРОСТРАНСТВО</div>
+      <nav class="side-nav">
+        <button class="nav-item active" data-view="home"><span class="nav-icon">⌂</span>Обзор</button>
+        <button class="nav-item" data-view="courses"><span class="nav-icon">▤</span>Каталог курсов</button>
+        <button class="nav-item" data-view="mascots"><span class="nav-icon">✳</span>Мои спутники</button>
+        <button class="nav-item" data-view="profile"><span class="nav-icon">◉</span>Мой профиль</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="side-note"><span class="note-spark">✦</span><p>Большие открытия начинаются с одного маленького шага.</p></div>
+        <button class="nav-item" data-view="settings"><span class="nav-icon">⚙</span>Настройки</button>
+        <div class="local-badge"><span class="status-dot"></span><span>Демо-режим: прогресс хранится только в этом браузере и не синхронизируется с аккаунтом.</span></div>
+      </div>
+    </aside>
+    <main class="main-area">
+      <header class="topbar">
+        <div class="breadcrumb" id="breadcrumb">Моё пространство <span>/</span> Обзор</div>
+        <div class="top-actions">
+          <div class="demo-pill" role="status" aria-label="Демо-режим: прогресс хранится локально и не синхронизируется с аккаунтом"><span class="demo-dot"></span><span>ДЕМО</span><small>без синхронизации с аккаунтом</small></div>
+          <div class="streak-pill" title="Дни, когда ты занимался"><span>☼</span><b id="streak-count">0</b><small>дней</small></div>
+          <div class="xp-pill"><span class="xp-star">✦</span><b id="header-xp">0</b><small>XP</small></div>
+          <button class="avatar-button" data-view="profile" aria-label="Открыть профиль"><span id="header-avatar">✿</span></button>
+        </div>
+      </header>
+      <div id="view-root" class="view-root" tabindex="-1"></div>
+      <footer class="app-footer"><span>KiraQuest <span id="footer-year"></span></span><span>Учись в своём ритме <span class="footer-heart">✦</span></span></footer>
+    </main>
+  </div>
+  <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+  <div class="modal-backdrop" id="modal-backdrop" hidden></div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
