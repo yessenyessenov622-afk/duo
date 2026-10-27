@@ -8,8 +8,8 @@ export function createInitialLearningProgress(): LearningProgress {
     version: 1,
     firstRunComplete: false,
     nickname: "Исследователь",
-    selectedMascotId: "miko",
-    selectedCourseId: "english-start",
+    selectedMascotId: "ren",
+    selectedCourseId: "life-budget",
     startedCourses: [],
     interests: [],
     completedLessons: [],
@@ -38,21 +38,14 @@ export function readLearningProgress(): { progress: LearningProgress; warning: s
       throw new Error("Версия локального сохранения не поддерживается.");
     }
     const defaults = createInitialLearningProgress();
-    const validCompleted = new Set(stored.completedLessons.filter((id): id is string => typeof id === "string" && Boolean(findLearningLesson(id))));
-    const orderedCompleted: string[] = [];
-    for (const course of learningCourses) {
-      let reachedGap = false;
-      for (const lessonId of courseLessonIds(course)) {
-        if (reachedGap) continue;
-        if (validCompleted.has(lessonId)) orderedCompleted.push(lessonId);
-        else reachedGap = true;
-      }
-    }
+    // Preserve every recognized completion, including valid legacy completions after gaps.
+    // The previous contiguous-prefix filter silently erased those saved IDs on read.
+    const preservedCompleted = [...new Set(stored.completedLessons.filter((id): id is string => typeof id === "string" && Boolean(findLearningLesson(id))))];
     return {
       progress: {
         ...defaults,
         ...stored,
-        completedLessons: orderedCompleted,
+        completedLessons: preservedCompleted,
         startedCourses: stored.startedCourses.filter((id): id is string => typeof id === "string" && learningCourses.some((course) => course.id === id)),
         completedModules: Array.isArray(stored.completedModules) ? stored.completedModules.filter((id): id is string => typeof id === "string") : [],
         activityDates: Array.isArray(stored.activityDates) ? stored.activityDates.filter((id): id is string => typeof id === "string" && /^\d{4}-\d{2}-\d{2}$/.test(id)) : [],

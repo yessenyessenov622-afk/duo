@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { DEFAULT_SETTINGS, appearanceRuntime, normalizeSettings, readSettings, writeSettings } from "@/src/lib/customization";
+import { loadWallpaper } from "@/src/lib/wallpaper-storage";
 import type { CustomizationSettings } from "@/src/types/customization";
 
 type CustomizationContextValue = {
@@ -26,7 +27,23 @@ export function CustomizationProvider({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => {
     if (!ready) return;
-    appearanceRuntime.apply(document.documentElement, settings);
+    const root = document.documentElement;
+    appearanceRuntime.apply(root, settings);
+    root.style.removeProperty("--wallpaper-image");
+    let active = true;
+    let imageUrl = "";
+    if (settings.background === "image") {
+      loadWallpaper(settings.customWallpaperId).then((blob) => {
+        if (!active || !blob) return;
+        imageUrl = URL.createObjectURL(blob);
+        root.style.setProperty("--wallpaper-image", `url("${imageUrl}")`);
+      }).catch(() => setWarning("Не удалось загрузить сохранённый фон. Выбери другое изображение в студии."));
+    }
+    return () => {
+      active = false;
+      root.style.removeProperty("--wallpaper-image");
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+    };
   }, [settings, ready]);
   const save = useCallback((next: CustomizationSettings) => {
     const normalized = normalizeSettings(next);

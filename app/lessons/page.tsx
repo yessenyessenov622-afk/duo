@@ -1,5 +1,6 @@
 import { LessonExperience } from "@/src/components/LessonExperience";
 import { PageHeading } from "@/src/components/PageHeading";
+import { CourseCatalog } from "@/src/components/CourseCatalog";
 
 type LessonsPageProps = { searchParams: Promise<{ lesson?: string | string[] }> };
 
@@ -9,12 +10,12 @@ export default async function LessonsPage({ searchParams }: LessonsPageProps) {
   return (
     <>
       <PageHeading
-        eyebrow="ОДИН ШАГ ЗА РАЗ"
-        title={lessonId ? "Короткий урок" : "Учебная карта"}
-        description={lessonId ? "Одно небольшое задание, чтобы закрепить тему и открыть следующий шаг." : "Выбери направление на карте и продолжи путь с подходящего урока."}
+        eyebrow={lessonId ? "ОДИН ШАГ ЗА РАЗ" : "ПРАКТИЧЕСКИЕ НАВЫКИ"}
+        title={lessonId ? "Короткий урок" : "Каталог уроков"}
+        description={lessonId ? "Короткое объяснение, жизненный пример, твой выбор и понятный разбор результата." : "Выбери направление и продолжай с любого доступного первого шага."}
         icon="▤"
       />
-      <LessonExperience lessonId={lessonId} />
+      {lessonId ? <LessonExperience key={lessonId} lessonId={lessonId} /> : <CourseCatalog />}
     </>
   );
 }

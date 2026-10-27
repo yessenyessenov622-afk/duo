@@ -15,9 +15,10 @@ const STATUS_COPY: Record<LessonStatus, { label: string; icon: string }> = {
   available: { label: "Можно начать", icon: "✦" }, locked: { label: "Закрыт", icon: "⌑" },
 };
 
-function CourseChapter({ course, chapter, completedIds, startedIds, onSelect, chapterIndex }: {
+function CourseChapter({ course, chapter, completedIds, startedIds, onSelect, chapterIndex, companion }: {
   course: LearningCourse; chapter: LearningChapter; completedIds: string[]; startedIds: string[];
   onSelect: (course: LearningCourse, chapter: LearningChapter, lesson: LearningLesson, status: LessonStatus) => void; chapterIndex: number;
+  companion?: { id: string; accessory: string };
 }) {
   const completeCount = chapter.lessons.filter((lesson) => completedIds.includes(lesson.id)).length;
   const chapterComplete = completeCount === chapter.lessons.length;
@@ -38,6 +39,7 @@ function CourseChapter({ course, chapter, completedIds, startedIds, onSelect, ch
           {status === "available" && <span className="node-cta">Начать</span>}
         </button>;
       })}
+      {companion && <div className="map-path-companion" aria-hidden="true"><MascotAvatar id={companion.id} accessory={companion.accessory} className="map-path-mascot" state="greet" /></div>}
     </div>
   </section>;
 }
@@ -99,7 +101,6 @@ export function LearningMap() {
         {startHref ? <Link href={startHref} className="button button-dark map-continue">{completedCount ? "Продолжить обучение" : "Начать первое приключение"}<span aria-hidden="true">→</span></Link> : <span className="map-finished-note">Ты прошёл все уроки этого направления. Можно вернуться и повторить любой.</span>}
         <button type="button" className="button button-outline map-hint-trigger" aria-expanded={hintOpen} onClick={() => setHintOpen((value) => !value)}>✦ Подсказка</button>
       </div>{hintOpen && <p className="map-hint" role="status">{hintText}</p>}</div>
-      <div className="map-companion"><MascotAvatar id={mascot} accessory={settings.mascot.accessory} className="map-mascot"/><div><span className="eyebrow">СПУТНИК РЯДОМ</span><b>{completedCount ? "Каждый шаг открывает новый путь." : "Начни с короткого шага — я рядом."}</b></div></div>
       <div className="map-stats" aria-label="Демо-прогресс">
         <div className="map-stat map-stat-progress"><span>Путь пройден</span><b>{progressPercent}<small>%</small></b><span className="map-meter"><i style={{ width: `${progressPercent}%` }}/></span></div>
         <div className="map-stat"><span>Уроки</span><b>{completedCount}<small> / {visibleLessons.length}</small></b></div>
@@ -117,7 +118,7 @@ export function LearningMap() {
         const courseCompleted = courseLessons.filter((lesson) => progress.completedLessons.includes(lesson.id)).length;
         return <section className="map-course-world" key={course.id} style={{ "--course-accent": course.accent } as React.CSSProperties}>
           <header className="map-world-heading"><span className="world-course-icon" aria-hidden="true">{course.icon}</span><div><span className="world-category">{course.category.toUpperCase()} · {courseCompleted} ИЗ {courseLessons.length} УРОКОВ</span><h2>{course.title}</h2><p>{course.description}</p></div><div className="world-completion" aria-label={`Завершено ${courseCompleted} из ${courseLessons.length} уроков`}><span>{Math.round((courseCompleted / courseLessons.length) * 100)}%</span><i><b style={{ width: `${(courseCompleted / courseLessons.length) * 100}%` }}/></i></div></header>
-          <div className="world-chapters">{course.chapters.map((chapter, index) => <CourseChapter key={chapter.id} course={course} chapter={chapter} chapterIndex={index} completedIds={progress.completedLessons} startedIds={progress.startedCourses} onSelect={openLesson} />)}</div>
+          <div className="world-chapters">{course.chapters.map((chapter, index) => <CourseChapter key={chapter.id} course={course} chapter={chapter} chapterIndex={index} completedIds={progress.completedLessons} startedIds={progress.startedCourses} onSelect={openLesson} companion={course.id === shownCourses[0]?.id && index === 0 ? { id: mascot, accessory: settings.mascot.accessory } : undefined} />)}</div>
         </section>;
       })}</div>
       <section className="map-footer-tools"><div className="map-reward-card"><span className="map-reward-icon" aria-hidden="true">✦</span><div><span className="eyebrow">НАГРАДА ГЛАВЫ</span><b>Каждый урок приносит {25} XP</b><small>Заверши все уроки главы — она появится в твоих достижениях.</small></div></div><button type="button" className="map-reset-button" onClick={handleReset}>Сбросить демо-прогресс</button></section>

@@ -15,10 +15,11 @@ export function MascotGallery() {
       {mascotPreviews.map((mascot) => {
         const selected = mascot.id === settings.mascot.id;
         return <article className={`mascot-card mascot-select-card${selected ? " mascot-selected" : ""}`} key={mascot.id}>
-          <MascotAvatar id={mascot.id} accessory={selected ? settings.mascot.accessory : "none"} className="mascot-gallery-avatar" />
+          <MascotAvatar id={mascot.id} accessory={selected ? settings.mascot.accessory : "none"} className="mascot-gallery-avatar" state="greet" />
           <div className="mascot-gallery-copy"><span className="eyebrow">{mascot.kind.toUpperCase()}</span><h2>{mascot.name}</h2><p>{mascot.description}. {mascot.personality}</p><blockquote>«{mascot.greeting[0]}»</blockquote></div>
           <button className={`button ${selected ? "button-soft" : "button-outline"}`} aria-pressed={selected} onClick={() => {
-            const ok = save({ ...settings, mascot: { ...settings.mascot, id: mascot.id } });
+            const accessory = settings.mascot.looks?.[mascot.id]?.accessory ?? (settings.mascot.id === mascot.id ? settings.mascot.accessory : "none");
+            const ok = save({ ...settings, mascot: { ...settings.mascot, id: mascot.id, accessory } });
             setNotice(ok ? `${mascot.name} теперь твой спутник.` : "Не удалось сохранить выбор. Проверь доступ к локальному хранилищу.");
           }}>{selected ? "✓ Твой спутник" : "Выбрать спутника"}</button>
         </article>;

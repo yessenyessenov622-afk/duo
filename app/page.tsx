@@ -2,57 +2,36 @@ import Link from "next/link";
 import { PageHeading } from "@/src/components/PageHeading";
 import { HomeCompanion } from "@/src/components/HomeCompanion";
 import { QuickWarmup } from "@/src/components/QuickWarmup";
+import { HomeLearningPath } from "@/src/components/HomeLearningPath";
 
 export default function HomePage() {
   return (
     <>
       <PageHeading
+        className="home-page-heading"
         eyebrow="ТВОЁ УЧЕБНОЕ ПРОСТРАНСТВО"
         title="Привет, исследователь!"
         description="Выбери следующий маленький шаг — и двигайся в своём ритме."
-        icon="✦"
+        icon=""
       />
 
-      <section className="hero-panel home-hero">
-        <div className="hero-copy">
-          <span className="hero-kicker"><span>✧</span> ТВОЙ СЛЕДУЮЩИЙ ШАГ</span>
-          <h2>Начни первое приключение</h2>
-          <p>Учебная карта готовится. Пока можно познакомиться со спутниками и настроить свой мир.</p>
-          <div className="hero-meta">
-            <span>В своём темпе</span>
-            <span>Без спешки</span>
-          </div>
-          <Link className="button button-dark" href="/map">
-            Открыть карту <span aria-hidden="true">→</span>
-          </Link>
-        </div>
-        <div className="hero-art" aria-hidden="true">
-          <div className="hero-sun" />
-          <div className="hero-mountain mountain-back" />
-          <div className="hero-mountain mountain-front" />
-          <div className="hero-path" />
-          <span className="hero-star star-one">✦</span>
-          <span className="hero-star star-two">✧</span>
-          <div className="hero-character">🐈</div>
-          <span className="art-label">шаг за шагом</span>
-        </div>
-      </section>
+      <HomeLearningPath />
 
       <section className="home-widgets" aria-label="Твоё пространство">
         <HomeCompanion />
         <QuickWarmup />
         <article className="home-next-card">
-          <span className="home-widget-icon">⌁</span>
-          <span className="eyebrow">ТВОЙ МАРШРУТ</span>
-          <h2>Карта ждёт первого шага</h2>
-          <p>Сейчас здесь ещё нет выбранного курса или сохранённого прогресса.</p>
-          <Link href="/map" className="text-button">Посмотреть карту <span aria-hidden="true">→</span></Link>
+          <span className="home-widget-icon">▤</span>
+          <span className="eyebrow">ПРАКТИЧЕСКИЕ ТЕМЫ</span>
+          <h2>Навыки на каждый день</h2>
+          <p>Бюджет, расписание, покупки, работа и домашние дела — с понятными примерами.</p>
+          <Link href="/lessons" className="text-button">Открыть каталог <span aria-hidden="true">→</span></Link>
         </article>
         <article className="home-next-card home-quiet-card">
           <span className="home-widget-icon">✿</span>
           <span className="eyebrow">БЕЗ ДАВЛЕНИЯ</span>
-          <h2>Начинай когда удобно</h2>
-          <p>Здесь появятся рекомендации, когда будет доступен учебный маршрут.</p>
+          <h2>Учись в своём темпе</h2>
+          <p>Ошибки помогают понять материал. Можно повторить вопрос и спокойно прочитать разбор.</p>
         </article>
       </section>
 

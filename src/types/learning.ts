@@ -1,4 +1,11 @@
 export type LessonTask = {
+  mode?: "single" | "multi" | "budget" | "schedule" | "matching" | "sequence";
+  answers?: string[];
+  budget?: { total: number; allocations: { id: string; label: string; minimum: number; initial: number }[] };
+  schedule?: { dayStart: number; dayEnd: number; events: { id: string; title: string; duration: number; initialStart: number; latestEnd?: number }[] };
+  matching?: { pairs: { left: string; right: string }[]; choices: string[] };
+  sequence?: { items: { id: string; label: string }[]; answer: string[]; initialOrder: string[] };
+  context?: string;
   prompt: string;
   options: string[];
   answer: string;
@@ -10,6 +17,7 @@ export type LearningLesson = {
   title: string;
   duration: string;
   task: LessonTask;
+  skillOutcome?: string;
 };
 
 export type LearningChapter = {

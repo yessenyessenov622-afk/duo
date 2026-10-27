@@ -19,6 +19,7 @@ export function SiteHeader() {
   const { settings, ready, save, warning, dismissWarning } = useCustomization();
   const toggleTheme = () => save({
     ...settings,
+    systemTheme: false,
     theme: settings.theme === "dark" ? settings.lastLightTheme : "dark",
     lastLightTheme: settings.theme === "dark" ? settings.lastLightTheme : settings.theme,
   });
