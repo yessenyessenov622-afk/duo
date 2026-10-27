@@ -35,16 +35,16 @@ export function SiteShell({ children }: SiteShellProps) {
           </div>
         </div>
       </aside>
-      <main className="main-area">
+      <div className="main-area">
         <SiteHeader />
-        <div className="view-root" id="main-content" tabIndex={-1}>
+        <main className="view-root" id="main-content" tabIndex={-1}>
           {children}
-        </div>
+        </main>
         <footer className="app-footer">
           <span>{APP_NAME}</span>
           <span>Учись в своём ритме <span className="footer-heart">✦</span></span>
         </footer>
-      </main>
+      </div>
     </div>
     </LearningProgressProvider>
     </CustomizationProvider>

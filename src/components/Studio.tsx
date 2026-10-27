@@ -43,7 +43,7 @@ export function Studio() {
   } as React.CSSProperties;
   const visualStyles: { id: VisualStyleId; label: string; description: string }[] = [
     { id: "calm", label: "Спокойный", description: "Мягкие поверхности и тонкие границы." },
-    { id: "neo-brutalist", label: "Сдержанный необрутализм", description: "Чёткие рамки и небольшие смещённые тени." },
+    { id: "soft-brutalism-lite", label: "Soft Brutalism Lite", description: "Тонкие границы и мягкий акцентный объём." },
   ];
   if (!ready) return <p role="status">Загружаем настройки оформления…</p>;
   return <div className="studio-layout">

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useCustomization } from "@/src/components/CustomizationProvider";
 import type { NavigationItem } from "@/src/types/navigation";
+import { FocusInterval } from "@/src/components/FocusInterval";
 
 const pageNames: NavigationItem[] = [
   { href: "/", label: "Обзор", icon: "" },
@@ -30,6 +31,7 @@ export function SiteHeader() {
         Моё пространство <span>/</span> {pageName}
       </div>
       <div className="top-actions">
+        <FocusInterval />
         <button type="button" className="theme-toggle" disabled={!ready} onClick={toggleTheme} aria-pressed={settings.theme === "dark"} aria-label={settings.theme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"}><span aria-hidden="true">{settings.theme === "dark" ? "☀" : "☾"}</span></button>
         <div
           className="demo-pill"

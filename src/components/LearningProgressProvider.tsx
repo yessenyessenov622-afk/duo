@@ -47,6 +47,8 @@ export function LearningProgressProvider({ children }: { children: ReactNode }) 
     if (status === "locked") return false;
     return commit({
       ...progress,
+      activeLessonId: lessonId,
+      lastActivityAt: Date.now(),
       selectedCourseId: match.course.id,
       startedCourses: progress.startedCourses.includes(match.course.id) ? progress.startedCourses : [...progress.startedCourses, match.course.id],
     });
@@ -57,6 +59,7 @@ export function LearningProgressProvider({ children }: { children: ReactNode }) 
     const reviewTopics = isCorrect || progress.reviewTopics.includes(lessonId) ? progress.reviewTopics : [...progress.reviewTopics, lessonId];
     return commit({
       ...progress,
+      lastActivityAt: Date.now(),
       totalAnswers: Number(progress.totalAnswers ?? 0) + 1,
       correctAnswers: Number(progress.correctAnswers ?? 0) + (isCorrect ? 1 : 0),
       reviewTopics,
@@ -67,7 +70,13 @@ export function LearningProgressProvider({ children }: { children: ReactNode }) 
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const completion = completeLearningLesson(progress, lessonId, today);
     if (!completion) return { ok: false, awarded: false, error: "Этот урок пока закрыт." };
-    const ok = commit(completion.progress);
+    const completedModule = completion.progress.completedModules.length > progress.completedModules.length;
+    const ok = commit({
+      ...completion.progress,
+      activeLessonId: null,
+      lastActivityAt: Date.now(),
+      ...(completedModule ? { lastModuleCompletedAt: Date.now() } : {}),
+    });
     return { ok, awarded: ok && completion.awarded, error: ok ? undefined : "Не удалось сохранить результат в браузере." };
   }, [commit, progress]);
   /*
@@ -83,6 +92,7 @@ export function LearningProgressProvider({ children }: { children: ReactNode }) 
       startedCourses: [], completedLessons: [], completedModules: [], claimedAchievements: [],
       repeatCompletions: 0, xp: 0, tokens: 0, totalAnswers: 0, correctAnswers: 0,
       activityDates: [], reviewTopics: [], lessonSession: null,
+      activeLessonId: null, lastActivityAt: undefined, lastModuleCompletedAt: undefined,
     };
     return commit(next);
   }, [commit, progress]);

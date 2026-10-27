@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PageHeading } from "@/src/components/PageHeading";
 import { HomeCompanion } from "@/src/components/HomeCompanion";
+import { QuickWarmup } from "@/src/components/QuickWarmup";
 
 export default function HomePage() {
   return (
@@ -39,6 +40,7 @@ export default function HomePage() {
 
       <section className="home-widgets" aria-label="Твоё пространство">
         <HomeCompanion />
+        <QuickWarmup />
         <article className="home-next-card">
           <span className="home-widget-icon">⌁</span>
           <span className="eyebrow">ТВОЙ МАРШРУТ</span>

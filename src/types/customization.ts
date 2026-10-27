@@ -1,9 +1,9 @@
 export type ThemeId = "light" | "dark" | "lavender" | "amber" | "mint" | "sakura" | "ocean" | "forest" | "mono";
 export type BackgroundId = "quiet" | "stars" | "library" | "sakura" | "forest" | "ocean" | "custom";
-export type VisualStyleId = "calm" | "neo-brutalist";
+export type VisualStyleId = "calm" | "soft-brutalism-lite";
 export type MascotSettings = { id: string; accessory: string };
 export type CustomizationSettings = {
-  version: 2;
+  version: 3;
   visualStyle: VisualStyleId;
   theme: ThemeId;
   lastLightTheme: Exclude<ThemeId, "dark">;

@@ -9,10 +9,16 @@ type AppearanceSettings = Pick<CustomizationSettings, "theme" | "visualStyle" | 
 export function createAppearanceRuntime(palettes: Record<ThemeId, Palette>, defaults: AppearanceSettings) {
   function normalize(input: unknown): AppearanceSettings {
     const value = input && typeof input === "object" && !Array.isArray(input) ? input as Partial<AppearanceSettings> : {};
+    const storedVisualStyle = input && typeof input === "object" && !Array.isArray(input)
+      ? (input as Record<string, unknown>).visualStyle
+      : undefined;
     const isColor = (color: unknown): color is string => typeof color === "string" && /^#[0-9a-f]{6}$/i.test(color);
     return {
       theme: typeof value.theme === "string" && Object.prototype.hasOwnProperty.call(palettes, value.theme) ? value.theme : defaults.theme,
-      visualStyle: value.visualStyle === "neo-brutalist" ? "neo-brutalist" : "calm",
+      // Keep persisted preferences from v1/v2 recognizable while softening their treatment.
+      visualStyle: storedVisualStyle === "soft-brutalism-lite" || storedVisualStyle === "neo-brutalist"
+        ? "soft-brutalism-lite"
+        : storedVisualStyle === "calm" ? "calm" : defaults.visualStyle,
       accentMode: value.accentMode === "custom" || (value.accentMode === undefined && isColor(value.accent) && value.accent.toLowerCase() !== defaults.accent) ? "custom" : "theme",
       accent: isColor(value.accent) ? value.accent : defaults.accent,
       background: ["quiet", "stars", "library", "sakura", "forest", "ocean", "custom"].includes(value.background ?? "") ? value.background! : defaults.background,
@@ -55,6 +61,8 @@ export function createAppearanceRuntime(palettes: Record<ThemeId, Palette>, defa
       "--accent": accent, "--accent-soft": soft, "--on-accent": onAccent,
       "--purple": accent, "--purple-dark": accent, "--lavender": soft,
       "--focus-ring": accent, "--custom-wallpaper": settings.customBackground,
+      "--border-subtle": palette.line,
+      "--shadow-color": settings.theme === "dark" ? "rgba(0, 0, 0, 0.28)" : "color-mix(in srgb, " + accent + " 10%, transparent)",
       "--font-scale": String(settings.fontScale),
       "--content-space": compact ? "12px" : "18px",
       "--section-gap": compact ? "12px" : "20px",

@@ -12,6 +12,7 @@ export function LessonExperience({ lessonId }: { lessonId: string }) {
   const [checked, setChecked] = useState(false);
   const [correct, setCorrect] = useState(false);
   const [result, setResult] = useState<{ awarded: boolean; message: string } | null>(null);
+  const [readerMode, setReaderMode] = useState(false);
   const started = useRef(false);
   const match = lessonId ? findLearningLesson(lessonId) : null;
 
@@ -20,6 +21,11 @@ export function LessonExperience({ lessonId }: { lessonId: string }) {
     started.current = true;
     startLesson(match.lesson.id);
   }, [ready, match, startLesson]);
+
+  useEffect(() => {
+    document.documentElement.dataset.readerMode = String(readerMode);
+    return () => { delete document.documentElement.dataset.readerMode; };
+  }, [readerMode]);
 
   if (!lessonId) return <section className="lesson-route-empty"><span className="lesson-route-art" aria-hidden="true">⌁</span><span className="eyebrow">ГОТОВ К НОВОМУ ШАГУ?</span><h2>Выбери урок на карте</h2><p>На карте видны все направления, открытые уроки и уже пройденные шаги.</p><Link className="button button-dark" href="/map">Открыть карту обучения <span aria-hidden="true">→</span></Link><div className="lesson-course-shortcuts">{learningCourses.map((course) => <span key={course.id}>{course.icon} {course.title}</span>)}</div></section>;
   if (!match) return <section className="lesson-route-empty"><span className="lesson-route-art" aria-hidden="true">?</span><span className="eyebrow">УРОК НЕ НАЙДЕН</span><h2>Этот шаг не входит в маршрут</h2><p>Вернись на карту и открой урок из доступного списка.</p><Link className="button button-dark" href="/map">Назад к карте <span aria-hidden="true">→</span></Link></section>;
@@ -40,7 +46,7 @@ export function LessonExperience({ lessonId }: { lessonId: string }) {
   };
 
   return <section className="lesson-workspace">
-    <div className="lesson-flow-top"><Link href="/map" className="lesson-back-link">← Вернуться к карте</Link><span>{course.title} <i aria-hidden="true">/</i> {chapter.title}</span><span className="lesson-local-tag">ДЕМО · ЛОКАЛЬНО</span></div>
+    <div className="lesson-flow-top"><Link href="/map" className="lesson-back-link">← Вернуться к карте</Link><span>{course.title} <i aria-hidden="true">/</i> {chapter.title}</span><span className="lesson-local-tag">ДЕМО · ЛОКАЛЬНО</span><button type="button" className="reader-mode-toggle" aria-pressed={readerMode} onClick={() => setReaderMode((active) => !active)}>{readerMode ? "Выйти из режима чтения" : "Режим чтения"}</button></div>
     {warning && <p className="map-warning" role="alert">{warning}</p>}
     {blocked ? <div className="lesson-blocked"><span aria-hidden="true">⌑</span><div><h2>Этот урок пока закрыт</h2><p>Продолжи маршрут с предыдущего открытого шага — после него появится этот урок.</p><Link href="/map" className="button button-dark">Найти открытый урок <span aria-hidden="true">→</span></Link></div></div> : result ? <div className="lesson-result-card"><span className={`lesson-result-seal${result.awarded ? " earned" : ""}`} aria-hidden="true">{result.awarded ? "✦" : "↻"}</span><span className="eyebrow">{result.awarded ? "НОВЫЙ ШАГ ПРОЙДЕН" : "ПОВТОРЕНИЕ ЗАВЕРШЕНО"}</span><h1>Отличная работа!</h1><p>{result.message}</p><div className="lesson-result-facts"><span>Всего XP <b>{progress.xp}</b></span><span>Уроков пройдено <b>{progress.completedLessons.length}</b></span></div><Link className="button button-dark" href="/map">Продолжить по карте <span aria-hidden="true">→</span></Link></div> : <>
       <div className="lesson-session-heading"><div><span className="eyebrow">{chapter.title}</span><h1>{lesson.title}</h1><p>{course.title} <span aria-hidden="true">·</span> {lesson.duration} <span aria-hidden="true">·</span> {XP_PER_LESSON} XP за первое прохождение</p></div><div className="lesson-progress-orb"><b>1</b><small>задание</small></div></div>

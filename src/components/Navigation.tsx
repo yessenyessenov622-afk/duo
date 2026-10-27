@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { NavigationItem } from "@/src/types/navigation";
+import { AppIcon, type AppIconName } from "@/src/components/AppIcon";
 
-const navigationItems: NavigationItem[] = [
-  { href: "/", label: "Обзор", icon: "⌂" },
-  { href: "/map", label: "Карта", icon: "⌁" },
-  { href: "/lessons", label: "Урок", icon: "▤" },
-  { href: "/mascots", label: "Маскоты", icon: "✳" },
-  { href: "/studio", label: "Студия", icon: "✧" },
-  { href: "/profile", label: "Профиль", icon: "◉" },
+const navigationItems: (NavigationItem & { icon: AppIconName })[] = [
+  { href: "/", label: "Обзор", icon: "home" },
+  { href: "/map", label: "Карта", icon: "map" },
+  { href: "/lessons", label: "Уроки", icon: "lessons" },
+  { href: "/mascots", label: "Маскоты", icon: "mascots" },
+  { href: "/studio", label: "Студия", icon: "studio" },
+  { href: "/profile", label: "Профиль", icon: "profile" },
 ];
 
 export function Navigation() {
@@ -28,7 +29,7 @@ export function Navigation() {
             key={item.href}
             aria-current={isActive ? "page" : undefined}
           >
-            <span className="nav-icon" aria-hidden="true">{item.icon}</span>
+            <span className="nav-icon"><AppIcon name={item.icon} /></span>
             <span>{item.label}</span>
           </Link>
         );

@@ -4,7 +4,7 @@ import type { CustomizationSettings, ThemeId } from "@/src/types/customization";
 
 export const SETTINGS_KEY = "kiraquest.customization.v1";
 export const DEFAULT_SETTINGS: CustomizationSettings = {
-  version: 2, visualStyle: "calm", theme: "lavender", lastLightTheme: "lavender", accentMode: "theme",
+  version: 3, visualStyle: "soft-brutalism-lite", theme: "lavender", lastLightTheme: "lavender", accentMode: "theme",
   accent: "#8064d8", background: "quiet", customBackground: "#f4f0fb",
   fontScale: 1, density: "comfortable", mascot: { id: "miko", accessory: "none" },
   animations: true, sounds: false, quoteFrequency: "sometimes", largeText: false,
@@ -23,7 +23,7 @@ export function normalizeSettings(input: unknown): CustomizationSettings {
   const lastLightTheme = value.lastLightTheme && themes.filter((id) => id !== "dark").includes(value.lastLightTheme) ? value.lastLightTheme : "lavender";
   return {
     ...appearance,
-    version: 2,
+    version: 3,
     lastLightTheme: theme !== "dark" ? theme : lastLightTheme,
     mascot: {
       id: typeof mascot.id === "string" && /^[a-z0-9-]+$/.test(mascot.id) ? mascot.id : "miko",

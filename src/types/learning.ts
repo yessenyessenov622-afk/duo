@@ -45,5 +45,8 @@ export type LearningProgress = {
   totalAnswers: number;
   correctAnswers: number;
   reviewTopics: string[];
+  activeLessonId?: string | null;
+  lastActivityAt?: number;
+  lastModuleCompletedAt?: number;
   [field: string]: unknown;
 };
