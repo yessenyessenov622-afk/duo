@@ -1,0 +1,76 @@
+name: Deploy KiraQuest to AWS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: kiraquest-aws-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Get short-lived AWS credentials through GitHub OIDC
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::478726716640:role/KiraQuestGitHubDeployRole
+          role-session-name: KiraQuest-${{ github.run_id }}
+          aws-region: eu-central-1
+          allowed-account-ids: 478726716640
+
+      - name: Deploy the main branch through Systems Manager
+        shell: bash
+        env:
+          INSTANCE_ID: i-0b05ac26838c6dfbe
+        run: |
+          set -euo pipefail
+
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name KiraQuestDeploy \
+            --comment "GitHub Actions run ${GITHUB_RUN_ID}" \
+            --query 'Command.CommandId' \
+            --output text)"
+          echo "SSM deployment command: $command_id"
+
+          for attempt in {1..120}; do
+            status="$(aws ssm get-command-invocation \
+              --command-id "$command_id" \
+              --instance-id "$INSTANCE_ID" \
+              --query Status \
+              --output text 2>/dev/null || true)"
+
+            if [[ "$status" == "Success" ]]; then
+              echo "KiraQuest deployment completed."
+              exit 0
+            fi
+
+            if [[ "$status" =~ ^(Failed|Cancelled|TimedOut|Cancelling)$ ]]; then
+              aws ssm get-command-invocation \
+                --command-id "$command_id" \
+                --instance-id "$INSTANCE_ID" \
+                --query StandardErrorContent \
+                --output text || true
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query StandardErrorContent \
+            --output text || true
+          echo "Timed out while waiting for the deployment command."
+          exit 1
