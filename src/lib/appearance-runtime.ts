@@ -1,6 +1,6 @@
 import type { CustomizationSettings, PaletteId, ThemeId, ThemeMode } from "@/src/types/customization";
 
-export type Palette = { accent: string; paper: string; surface: string; ink: string; muted: string; line: string };
+export type Palette = { accent: string; paper: string; surface: string; ink: string; muted: string; line: string; dark?: { paper: string; surface: string; ink: string; muted: string; line: string } };
 type AppearanceSettings = Pick<CustomizationSettings, "theme" | "themeMode" | "cardRadius" | "shadowIntensity" | "animationIntensity" | "visualStyle" | "accentMode" | "accent" | "background" | "customWallpaperId" | "wallpaperBlur" | "wallpaperDim" | "wallpaperScale" | "wallpaperX" | "wallpaperY" | "customBackground" | "fontScale" | "density" | "largeText" | "animations">;
 
 // Keep this factory self-contained: its compiled source also runs before React.
@@ -28,7 +28,7 @@ export function createAppearanceRuntime(palettes: Record<ThemeId, Palette>, defa
       // Keep persisted preferences from v1/v2 recognizable while softening their treatment.
       visualStyle: storedVisualStyle === "soft-brutalism-lite" || storedVisualStyle === "neo-brutalist"
         ? "soft-brutalism-lite"
-        : storedVisualStyle === "retro-desktop" ? "retro-desktop" : storedVisualStyle === "calm" ? "calm" : defaults.visualStyle,
+        : storedVisualStyle === "retro-desktop" || storedVisualStyle === "pixel-art" || storedVisualStyle === "y2k" || storedVisualStyle === "arcade" || storedVisualStyle === "calm" ? storedVisualStyle : defaults.visualStyle,
       accentMode: value.accentMode === "custom" || (value.accentMode === undefined && isColor(value.accent) && value.accent.toLowerCase() !== defaults.accent) ? "custom" : "theme",
       accent: isColor(value.accent) ? value.accent : defaults.accent,
       background: ["quiet", "stars", "library", "sakura", "forest", "ocean", "gradient", "dots", "grid", "paper", "abstract", "image", "custom"].includes(value.background ?? "") ? value.background! : defaults.background,
@@ -72,9 +72,10 @@ export function createAppearanceRuntime(palettes: Record<ThemeId, Palette>, defa
     const effectiveTheme = resolveTheme(settings);
     const darkTheme = effectiveTheme === "dark";
     const retroDesktop = settings.visualStyle === "retro-desktop";
+    const themedPalette = darkTheme ? { ...palettes.dark, ...(palettes[settings.theme].dark ?? {}) } : palettes[settings.theme];
     const palette = retroDesktop
-      ? { ...palettes[effectiveTheme], paper: darkTheme ? "#25262b" : "#c8c6be", surface: darkTheme ? "#34353b" : "#d7d5cd", ink: darkTheme ? "#f2f1ed" : "#24252a", muted: darkTheme ? "#c1c0c7" : "#55565a", line: darkTheme ? "#777982" : "#77766f" }
-      : palettes[effectiveTheme];
+      ? { ...themedPalette, paper: darkTheme ? "#25262b" : "#c8c6be", surface: darkTheme ? "#34353b" : "#d7d5cd", ink: darkTheme ? "#f2f1ed" : "#24252a", muted: darkTheme ? "#c1c0c7" : "#55565a", line: darkTheme ? "#777982" : "#77766f" }
+      : themedPalette;
     const accentPalette = palettes[settings.theme];
     const requested = settings.accentMode === "custom" ? settings.accent : accentPalette.accent;
     const soft = mixColor(requested, palette.surface, 0.12);

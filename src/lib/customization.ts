@@ -14,7 +14,7 @@ export const DEFAULT_SETTINGS: CustomizationSettings = {
 
 export const appearanceRuntime = createAppearanceRuntime(PALETTES, DEFAULT_SETTINGS);
 
-const themes: ThemeId[] = ["light", "dark", "lavender", "amber", "mint", "sakura", "ocean", "forest", "mono"];
+const themes: ThemeId[] = ["light", "dark", "lavender", "amber", "mint", "sakura", "ocean", "forest", "mono", "dark-knight", "cyberpunk", "sunset", "royal-purple"];
 const accessories = ["none", "star", "glasses", "scarf", "halo"];
 
 export function normalizeSettings(input: unknown): CustomizationSettings {
@@ -88,7 +88,7 @@ function hasInvalidStoredSettings(source: Record<string, unknown>): boolean {
   if (invalid("theme", (value) => typeof value === "string" && themes.includes(value as ThemeId))) return true;
   if (invalid("lastLightTheme", (value) => typeof value === "string" && themes.includes(value as ThemeId) && value !== "dark")) return true;
   if (invalid("themeMode", (value) => value === "light" || value === "dark" || value === "system")) return true;
-  if (invalid("visualStyle", (value) => value === "calm" || value === "soft-brutalism-lite" || value === "neo-brutalist" || value === "retro-desktop")) return true;
+  if (invalid("visualStyle", (value) => ["calm", "soft-brutalism-lite", "neo-brutalist", "retro-desktop", "pixel-art", "y2k", "arcade"].includes(String(value)))) return true;
   if (invalid("accentMode", (value) => value === "theme" || value === "custom")) return true;
   if (invalid("accent", color) || invalid("customBackground", color)) return true;
   if (invalid("background", (value) => typeof value === "string" && ["quiet", "stars", "library", "sakura", "forest", "ocean", "gradient", "dots", "grid", "paper", "abstract", "image", "custom"].includes(value))) return true;

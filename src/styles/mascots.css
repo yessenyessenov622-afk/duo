@@ -95,6 +95,7 @@ html[data-motion-intensity="high"] .mascot-avatar .mascot-eyes{animation-duratio
 .mascot-select-card:hover{transform:translateY(-2px);box-shadow:var(--studio-shadow)}
 .mascot-select-card.mascot-selected{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent)}
 .mascot-gallery-avatar{width:clamp(148px,14vw,188px);height:clamp(148px,14vw,188px);align-self:center;margin:2px 0 8px}
+.mascot-gallery-avatar.mascot-fox .ren-illustration{width:88%;height:88%;align-self:center;justify-self:center}
 .mascot-gallery-copy .eyebrow{font-size:.75rem}
 .mascot-gallery-copy h2{margin:2px 0 5px;color:var(--ink);font:800 1.375rem/1.2 'Manrope',sans-serif}
 .mascot-gallery-copy p{min-height:3.1em;margin:4px 0;color:var(--muted);font-size:.875rem;line-height:1.55}

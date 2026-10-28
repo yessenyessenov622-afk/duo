@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, type ChangeEvent } from "react";
 import { mascotPreviews } from "@/src/data/mascots";
@@ -8,9 +8,11 @@ import { useCustomization } from "@/src/components/CustomizationProvider";
 import { MascotAvatar } from "@/src/components/MascotAvatar";
 import { saveWallpaper } from "@/src/lib/wallpaper-storage";
 import { accountRequest, useAccount } from "@/src/components/AccountProvider";
-import type { BackgroundId, CustomizationSettings, PaletteId, ThemeMode, VisualStyleId } from "@/src/types/customization";
+import { QUICK_THEMES, VISUAL_STYLES } from "@/src/lib/appearance-options";
+import type { BackgroundId, CustomizationSettings, PaletteId, ThemeMode } from "@/src/types/customization";
 
 const themeOptions: { id: PaletteId; label: string; icon: string }[] = [
+  ...QUICK_THEMES.filter((theme) => theme.id !== "ocean" && theme.id !== "forest").map((theme) => ({ ...theme, icon: "✦" })),
   { id: "lavender", label: "Лунная лаванда", icon: "☾" }, { id: "light", label: "Нейтральная", icon: "☼" },
   { id: "amber", label: "Солнечный янтарь", icon: "✺" },
   { id: "mint", label: "Кибер-мята", icon: "❋" }, { id: "sakura", label: "Сакура", icon: "✿" },
@@ -119,16 +121,12 @@ export function Studio() {
   const previewTheme = draft.themeMode === "system"
     ? systemPrefersDark ? "dark" : draft.theme
     : appearanceRuntime.resolveTheme(draft);
-  const visualStyles: { id: VisualStyleId; label: string; description: string }[] = [
-    { id: "calm", label: "Спокойный", description: "Мягкие поверхности и тонкие границы." },
-    { id: "soft-brutalism-lite", label: "Необрутализм", description: "Чёткие границы, жёсткие тени и акцентные действия." },
-    { id: "retro-desktop", label: "Retro Desktop", description: "Учебная программа с объёмными панелями и акцентными полосами." },
-  ];
+  const visualStyles = VISUAL_STYLES;
   if (!ready) return <p role="status">Загружаем настройки оформления…</p>;
   return <div className="studio-layout">
     <section className="studio-preview-panel" data-visual-style={draft.visualStyle} data-theme={previewTheme} aria-label="Образец оформления" style={previewStyle}>
       <div className="studio-preview-top"><span className="eyebrow">ПРЕДПРОСМОТР</span><span className="studio-live-dot">● Образец</span></div>
-      <div className="studio-preview-combination" aria-label={`Стиль: ${draft.visualStyle === "calm" ? "спокойный" : "необрутализм"}; тема: ${draft.themeMode}; палитра: ${themeOptions.find((item) => item.id === draft.theme)?.label ?? draft.theme}; отображаемый акцент: ${previewAccent}`}><b>{draft.visualStyle === "calm" ? "Спокойный" : "Необрутализм"}</b><span>{draft.themeMode === "light" ? "Светлая" : draft.themeMode === "dark" ? "Тёмная" : "Системная"}</span><span>{themeOptions.find((item) => item.id === draft.theme)?.label ?? draft.theme}</span><span className="studio-preview-accent"><i style={{ background: previewAccent }} />{previewAccent}</span></div>
+      <div className="studio-preview-combination"><b>{VISUAL_STYLES.find((style) => style.id === draft.visualStyle)?.label}</b><span>{draft.themeMode === "light" ? "Светлая" : draft.themeMode === "dark" ? "Тёмная" : "Системная"}</span><span>{themeOptions.find((item) => item.id === draft.theme)?.label ?? draft.theme}</span><span className="studio-preview-accent"><i style={{ background: previewAccent }} />{previewAccent}</span></div>
       <div className="studio-preview-world" data-theme-preview={previewTheme} data-background-preview={draft.background} style={{ "--custom-wallpaper": draft.customBackground, "--custom-wallpaper-image": wallpaperPreview ? `url("${wallpaperPreview}")` : "var(--wallpaper-image, none)" } as React.CSSProperties}>
         <span className="preview-orbit orbit-one" aria-hidden="true">✧</span><span className="preview-orbit orbit-two" aria-hidden="true">✦</span>
         <MascotAvatar id={draft.mascot.id} accessory={draft.mascot.accessory} pose={draft.mascot.looks[draft.mascot.id]?.pose ?? "calm"} className="studio-mascot" />
@@ -169,8 +167,7 @@ export function Studio() {
           </div><p className="studio-hint">Переключатель звуков сохранён как предпочтение; воспроизведение звуков ещё не реализовано.</p></div>
         </>}
       </div>
-      <div className="studio-actions"><span className="studio-save-state" role="status">{notice || (dirty ? "Есть несохранённые изменения" : warning ? "Можно сохранить восстановленные настройки" : "Все изменения сохранены")}</span><div><button className="button button-outline" onClick={() => { const theme = themeOptions[Math.floor(Math.random() * themeOptions.length)]; const options = backgrounds.filter((item) => item.id !== "custom" && item.id !== "image"); const background = options[Math.floor(Math.random() * options.length)]; const mascot = mascotPreviews[Math.floor(Math.random() * mascotPreviews.length)]; const accessory = accessoryOptions[Math.floor(Math.random() * accessoryOptions.length)].id; const themeMode = (["light", "dark", "system"] as ThemeMode[])[Math.floor(Math.random() * 3)]; const visualStyle = (["calm", "soft-brutalism-lite", "retro-desktop"] as VisualStyleId[])[Math.floor(Math.random() * 3)]; setDraft((current) => ({ ...current, theme: theme.id, themeMode, background: background.id, accentMode: "theme", visualStyle, mascot: { ...current.mascot, id: mascot.id, accessory, looks: { ...current.mascot.looks, [mascot.id]: { accessory, pose: "calm" } } } })); setWallpaperFile(null); setWallpaperPreview(""); setNotice(""); }}>Случайное сочетание</button><button className="button button-outline" onClick={() => { setDraft(saved); setWallpaperFile(null); setWallpaperPreview(""); setNotice("Несохранённые изменения отменены."); }} disabled={!dirty}>Отменить</button><button className="button button-soft" onClick={resetAll}>Сбросить</button><button className="button button-dark" onClick={saveDraft} disabled={(!dirty && !warning) || saving}>{saving ? "Сохраняю…" : "Сохранить"}</button></div></div>
+      <div className="studio-actions"><span className="studio-save-state" role="status">{notice || (dirty ? "Есть несохранённые изменения" : warning ? "Можно сохранить восстановленные настройки" : "Все изменения сохранены")}</span><div><button className="button button-outline" onClick={() => { const theme = themeOptions[Math.floor(Math.random() * themeOptions.length)]; const options = backgrounds.filter((item) => item.id !== "custom" && item.id !== "image"); const background = options[Math.floor(Math.random() * options.length)]; const mascot = mascotPreviews[Math.floor(Math.random() * mascotPreviews.length)]; const accessory = accessoryOptions[Math.floor(Math.random() * accessoryOptions.length)].id; const themeMode = (["light", "dark", "system"] as ThemeMode[])[Math.floor(Math.random() * 3)]; const visualStyle = VISUAL_STYLES[Math.floor(Math.random() * VISUAL_STYLES.length)].id; setDraft((current) => ({ ...current, theme: theme.id, themeMode, background: background.id, accentMode: "theme", visualStyle, mascot: { ...current.mascot, id: mascot.id, accessory, looks: { ...current.mascot.looks, [mascot.id]: { accessory, pose: "calm" } } } })); setWallpaperFile(null); setWallpaperPreview(""); setNotice(""); }}>Случайное сочетание</button><button className="button button-outline" onClick={() => { setDraft(saved); setWallpaperFile(null); setWallpaperPreview(""); setNotice("Несохранённые изменения отменены."); }} disabled={!dirty}>Отменить</button><button className="button button-soft" onClick={resetAll}>Сбросить</button><button className="button button-dark" onClick={saveDraft} disabled={(!dirty && !warning) || saving}>{saving ? "Сохраняю…" : "Сохранить"}</button></div></div>
     </section>
   </div>;
 }
-

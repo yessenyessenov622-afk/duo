@@ -39,7 +39,7 @@ html[data-reduce-motion="true"] .node-next .node-orbit{animation:none!important}
 .map-course-level .world-chapters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 26px;padding:12px 8px}
 .map-course-level .journey-chapter{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0;padding:0 0 8px}
 .map-course-level .journey-chapter:nth-child(n+2){border-top:1px dashed #e9e4ed}
-.map-course-level .journey-path{position:relative;display:grid;place-items:center;width:100%;min-height:164px;margin:0;padding:0}
+.map-course-level .journey-path{position:relative;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;width:100%;min-height:164px;margin:0;padding:0}
 .map-course-level .journey-path::before{position:absolute;top:43px;left:50%;z-index:0;width:calc(200% + 26px);height:3px;border:0;border-radius:3px;background:color-mix(in srgb,var(--course-accent) 28%,var(--line));content:""}
 .map-course-level .journey-chapter:nth-child(even) .journey-path::before,.map-course-level .journey-chapter:last-child .journey-path::before{display:none}
 .map-course-level .journey-node.topic-node{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;min-height:0;margin:0;padding:0 8px;border:0;border-radius:0;background:transparent;color:var(--ink,#302b3b);text-align:center;cursor:pointer}
@@ -57,6 +57,8 @@ html[data-reduce-motion="true"] .node-next .node-orbit{animation:none!important}
 .topic-node .node-cta{position:relative;z-index:1;min-height:36px;padding:7px 12px;border:1px solid color-mix(in srgb,var(--course-accent) 30%,var(--line));border-radius:18px;background:color-mix(in srgb,var(--course-accent) 10%,var(--surface));color:var(--ink);font-size:.8rem;font-weight:800;white-space:nowrap}
 .node-locked-copy{position:relative;z-index:1;max-width:24ch;color:var(--muted,#686471);font-size:.75rem;line-height:1.4}
 .topic-description{max-width:34ch;margin:0;color:var(--muted,#686471);font-size:.8rem;line-height:1.5;text-align:center}
+.map-course-level>header h3{color:var(--ink)}
+.map-course-level>header p,.map-course-level>header small{color:var(--muted)}
 .topic-lesson-list{display:grid;gap:7px;margin:16px 0 0;padding:0;list-style:none}
 .topic-lesson-list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line,#eeedf0)}
 .topic-lesson-list li>span:first-child{display:grid;gap:3px;min-width:0}

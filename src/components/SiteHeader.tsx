@@ -5,6 +5,7 @@ import { useCustomization } from "@/src/components/CustomizationProvider";
 import type { NavigationItem } from "@/src/types/navigation";
 import { FocusInterval } from "@/src/components/FocusInterval";
 import { AccountStatus } from "@/src/components/AccountBoundary";
+import { AppearanceMenu } from "@/src/components/AppearanceMenu";
 
 const pageNames: NavigationItem[] = [
   { href: "/", label: "Обзор", icon: "" },
@@ -17,8 +18,7 @@ const pageNames: NavigationItem[] = [
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const { settings, ready, save, warning, dismissWarning } = useCustomization();
-  const toggleTheme = () => save({ ...settings, themeMode: settings.themeMode === "dark" ? "light" : "dark" });
+  const { settings, warning, dismissWarning } = useCustomization();
   const pageName = settings.visualStyle === "retro-desktop"
     ? pathname === "/lessons" ? "Библиотека курсов" : pathname === "/profile" ? "Карточка ученика" : pathname === "/studio" ? "Панель оформления" : pageNames.find((page) => page.href === pathname)?.label ?? "KiraQuest"
     : pageNames.find((page) => page.href === pathname)?.label ?? "KiraQuest";
@@ -31,7 +31,7 @@ export function SiteHeader() {
       </div>
       <div className="top-actions">
         <FocusInterval />
-        <button type="button" className="theme-toggle" disabled={!ready} onClick={toggleTheme} aria-pressed={settings.themeMode === "dark"} aria-label={settings.themeMode === "dark" ? "Включить светлую тему" : "Включить тёмную тему"}><span aria-hidden="true">{settings.themeMode === "dark" ? "☀" : "☾"}</span></button>
+        <AppearanceMenu />
         <AccountStatus />
       </div>
     </header>

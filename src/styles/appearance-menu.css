@@ -1,0 +1,34 @@
+.appearance-menu{display:flex;align-items:center;gap:5px}
+.appearance-menu-anchor{position:relative}
+.appearance-trigger{display:flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-size:.75rem;font-weight:700;cursor:pointer}
+.appearance-trigger[aria-expanded="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.appearance-popover{position:absolute;z-index:50;right:0;top:calc(100% + 10px);width:min(340px,calc(100vw - 24px));max-height:min(70vh,570px);overflow:auto;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);box-shadow:0 16px 45px #17102538;animation:appearance-open .16s ease-out}
+.appearance-popover-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:1rem}
+.appearance-popover-heading button{width:36px;height:36px;border:0;border-radius:8px;background:var(--paper);color:var(--ink);font-size:1.25rem;cursor:pointer}
+.appearance-choices{display:grid;gap:5px}
+.appearance-choices>button{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:8px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink);text-align:left;cursor:pointer}
+.appearance-choices>button:hover,.appearance-choices>button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--line)}
+.appearance-choices>button>span:nth-child(2){flex:1;min-width:0}
+.appearance-choices strong,.appearance-choices small{display:block}.appearance-choices small{margin-top:2px;color:var(--muted);font-size:.7rem;line-height:1.35}
+.appearance-choices .visual-style-mini{flex:none;width:52px;height:42px}
+.appearance-swatch{width:23px;height:23px;flex:none;border:2px solid var(--surface);border-radius:50%;box-shadow:0 0 0 1px var(--line)}
+.appearance-reset{width:100%;min-height:40px;margin-top:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-weight:700;cursor:pointer}
+@keyframes appearance-open{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:700px){.appearance-menu{gap:3px}.appearance-trigger{width:40px;padding:0;font-size:1rem}.appearance-trigger-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.appearance-menu-anchor{position:static}.top-actions{position:relative}.appearance-popover{right:0;top:calc(100% + 8px)}.top-actions .focus-interval-trigger{padding-inline:6px}.top-actions{gap:4px}}
+@media(prefers-reduced-motion:reduce){.appearance-popover{animation:none}}
+
+/* Style layers use the chosen palette's tokens; content and controls stay shared. */
+html:is([data-visual-style="pixel-art"],[data-visual-style="arcade"]) :is(.home-hero,.home-next-card,.home-companion,.home-quick-warmup,.stage-link,.map-overview,.map-course-world,.map-stat,.map-reward-card,.lesson-question-card,.lesson-detail-dialog,.lesson-result-card,.mascot-select-card,.mascot-gallery-intro,.studio-preview-panel,.studio-controls,.profile-banner,.profile-block,.course-catalog-card,.appearance-popover){border:2px solid var(--accent);border-radius:3px;box-shadow:4px 4px 0 color-mix(in srgb,var(--ink) 55%,transparent);background-color:var(--surface);background-image:none}
+html:is([data-visual-style="pixel-art"],[data-visual-style="arcade"]) :is(.button,.nav-item,.appearance-trigger,.appearance-reset,.lesson-answer-option,.mascot-reaction-button){border:2px solid var(--accent);border-radius:2px;box-shadow:2px 2px 0 color-mix(in srgb,var(--ink) 55%,transparent)}
+html:is([data-visual-style="pixel-art"],[data-visual-style="arcade"]) :is(.button,.nav-item,.appearance-trigger):active{transform:translate(2px,2px);box-shadow:none}
+html:is([data-visual-style="pixel-art"],[data-visual-style="arcade"]) :is(h1,h2,h3,.eyebrow,.world-category){font-family:Consolas,"Courier New",monospace;letter-spacing:-.03em}
+html:is([data-visual-style="pixel-art"],[data-visual-style="arcade"]) :is(.nav-icon svg,.world-course-icon,.node-symbol){image-rendering:pixelated;shape-rendering:crispEdges}
+html:is([data-visual-style="pixel-art"],[data-visual-style="arcade"]) :is(.map-meter,.home-path-progress>span,.world-completion>i){border-radius:0;border:1px solid var(--accent)}
+html[data-visual-style="arcade"] :is(.home-hero,.map-overview,.map-course-world,.mascot-select-card,.lesson-question-card){box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent),0 0 18px color-mix(in srgb,var(--accent) 35%,transparent)}
+html[data-visual-style="arcade"] :is(.button-dark,.map-continue){background:var(--accent);color:var(--on-accent)}
+html[data-visual-style="y2k"] :is(.home-hero,.home-next-card,.home-companion,.stage-link,.map-overview,.map-course-world,.lesson-question-card,.lesson-detail-dialog,.mascot-select-card,.mascot-gallery-intro,.studio-preview-panel,.studio-controls,.profile-banner,.profile-block,.course-catalog-card,.appearance-popover){border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent-soft) 55%,var(--surface)),var(--surface) 60%);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--ink) 12%,transparent),0 8px 24px var(--shadow-color)}
+html[data-visual-style="y2k"] :is(.button,.nav-item,.appearance-trigger,.appearance-reset,.mascot-reaction-button){border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:20px;box-shadow:inset 0 2px 0 #ffffff80,0 3px 8px var(--shadow-color)}
+html[data-visual-style="retro-desktop"] :is(.appearance-trigger,.appearance-reset,.appearance-popover){border:1px solid var(--retro-dark-edge);border-radius:2px;box-shadow:var(--style-control-shadow)}
+.visual-style-mini[data-mini-style="pixel-art"],.visual-style-mini[data-mini-style="arcade"]{border:3px solid var(--accent);border-radius:0;box-shadow:2px 2px 0 var(--ink)}
+.visual-style-mini[data-mini-style="arcade"]{background:var(--ink);box-shadow:0 0 7px var(--accent)}
+.visual-style-mini[data-mini-style="y2k"]{border-radius:12px;background:linear-gradient(135deg,var(--accent-soft),var(--surface));box-shadow:inset 0 2px 0 #ffffffa0,0 3px 8px var(--shadow-color)}

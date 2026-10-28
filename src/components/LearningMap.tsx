@@ -27,7 +27,6 @@ function CourseChapter({ course, chapter, completedIds, startedIds, onSelect }: 
         <span className="node-copy"><b>{chapter.title}</b><small>{completeCount} из {total} уроков · {statusLabel}</small></span>
         {status === "next" && <span className="node-cta">Продолжить</span>}
         {status === "available" && <span className="node-cta">Начать</span>}
-        {status === "locked" && <span className="node-locked-copy">Сначала пройди предыдущую тему</span>}
       </button>
     </div>
     <p className="topic-description">{chapter.description}</p>
