@@ -1,4 +1,9 @@
 .mascot-avatar{overflow:visible;contain:layout;background:transparent;box-shadow:none}
+.mascot-avatar:has(.neo-illustration){background:transparent;box-shadow:none}
+.mascot-avatar:has(.neo-illustration)::before{display:none}
+.neo-illustration{display:block;width:100%;height:100%;object-fit:contain}
+.neo-accessory{position:absolute;right:5%;top:8%;display:grid;place-items:center;width:26%;height:26%;border-radius:50%;background:#fff9e2;color:#467c67;font-size:clamp(12px,2vw,22px);box-shadow:0 2px 8px #254c3b30}
+.home-companion .companion-avatar{position:absolute}
 .mascot-avatar.mascot-fox{border-radius:0;background:transparent;box-shadow:none;contain:layout}
 .mascot-avatar.mascot-fox::before{display:none}
 .ren-illustration{display:block;width:100%;height:100%;overflow:visible;filter:none}

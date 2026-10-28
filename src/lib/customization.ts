@@ -8,7 +8,7 @@ const SETTINGS_VERSION = 7;
 export const DEFAULT_SETTINGS: CustomizationSettings = {
   version: SETTINGS_VERSION, visualStyle: "calm", theme: "lavender", themeMode: "light", cardRadius: 16, shadowIntensity: 0.65, animationIntensity: 1, accentMode: "theme",
   accent: "#8064d8", background: "quiet", customWallpaperId: "wallpaper-default", wallpaperBlur: 0, wallpaperDim: 0.08, wallpaperScale: 1, wallpaperX: 50, wallpaperY: 50, customBackground: "#f4f0fb",
-  fontScale: 1, density: "comfortable", mascot: { id: "ren", accessory: "none", looks: {} },
+  fontScale: 1, density: "comfortable", mascot: { id: "neo", accessory: "none", looks: {} },
   animations: true, sounds: false, quoteFrequency: "sometimes", largeText: false,
 };
 

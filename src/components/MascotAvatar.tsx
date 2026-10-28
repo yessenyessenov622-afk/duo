@@ -5,7 +5,7 @@ import type { CSSProperties } from "react";
 import { mascotPreviews } from "@/src/data/mascots";
 import { RenIllustration } from "@/src/components/RenIllustration";
 
-export type MascotState = "idle" | "greet" | "thinking" | "correct" | "support" | "celebrate" | "rest";
+export type MascotState = "idle" | "greet" | "thinking" | "correct" | "support" | "celebrate" | "rest" | "progress";
 
 function Character({ species, accessory }: { species: string; accessory: string }) {
   const eye = <g className="mascot-eyes"><ellipse cx="62" cy="68" rx="6" ry="9" fill="#302a3a"/><ellipse cx="96" cy="68" rx="6" ry="9" fill="#302a3a"/><circle cx="64" cy="65" r="2" fill="white"/><circle cx="98" cy="65" r="2" fill="white"/><path d="M73 83q6 5 12 0" fill="none" stroke="#754c58" strokeWidth="2.4" strokeLinecap="round"/></g>;
@@ -107,6 +107,9 @@ export function MascotAvatar({ id, accessory = "none", className = "", state = "
   }, []);
 
   return <div ref={rootRef} className={`mascot-avatar mascot-${mascot.species} mascot-state-${state} mascot-pose-${pose}${reducedMotion || !inView || !tabVisible ? " mascot-still" : ""} ${className}`} style={{ "--mascot-bg": mascot.color } as CSSProperties} aria-hidden="true">
-    <Character species={mascot.species} accessory={accessory} />
+    {mascot.id === "neo" ? <>
+      <img className="neo-illustration" src={`/mascots/neo-${state === "idle" || state === "thinking" ? "study" : state === "correct" || state === "celebrate" ? "celebrate" : state}.png`} alt="" />
+      {accessory !== "none" && <span className="neo-accessory" aria-hidden="true">{({ glasses: "◉", scarf: "❣", star: "★", halo: "◌" } as Record<string, string>)[accessory]}</span>}
+    </> : <Character species={mascot.species} accessory={accessory} />}
   </div>;
 }

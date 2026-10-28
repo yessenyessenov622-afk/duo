@@ -5,6 +5,7 @@ import { mascotPreviews } from "@/src/data/mascots";
 import { useCustomization } from "@/src/components/CustomizationProvider";
 import { useLearningProgress } from "@/src/components/LearningProgressProvider";
 import { useEffect, useState } from "react";
+import { MascotAvatar } from "@/src/components/MascotAvatar";
 
 export function HomeCompanion() {
   const { settings, ready } = useCustomization();
@@ -35,6 +36,7 @@ export function HomeCompanion() {
         {ready && progressReady && settings.quoteFrequency !== "minimal" && !dismissed ? <div className="companion-speech"><p>{message}</p><button type="button" onClick={() => setDismissed(true)}>Спасибо, понятно</button></div> : <p>{ready ? mascot.greeting[new Date().getDay() % mascot.greeting.length] : "Твой спутник уже готов к знакомству."}</p>}
         <Link href="/studio" className="text-button">Настроить пространство <span aria-hidden="true">→</span></Link>
       </div>
+      {ready && progressReady && <MascotAvatar id={settings.mascot.id} accessory={settings.mascot.accessory} className="companion-avatar" state={status === "Отдыхает" ? "rest" : status === "Горжусь тобой" ? "celebrate" : "idle"} />}
     </section>
   );
 }

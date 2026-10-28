@@ -37,6 +37,6 @@ export function HomeLearningPath() {
       <div className="home-path-progress" role="img" aria-label={`В направлении пройдено ${completed} из ${lessons.length} уроков`}><span><i style={{ width: `${progressPercent}%` }} /></span><small>{completed} из {lessons.length} уроков</small></div>
       <Link href={href} className="button button-dark">{hasStarted ? "Продолжить урок" : "Начать урок"}<span aria-hidden="true">→</span></Link>
     </div>
-    <MascotAvatar id={settings.mascot.id} accessory={settings.mascot.accessory} className="home-path-mascot" state="greet" />
+    <MascotAvatar id={settings.mascot.id} accessory={settings.mascot.accessory} className="home-path-mascot" state={hasStarted ? "progress" : "greet"} />
   </section>;
 }
