@@ -8,8 +8,14 @@ import { useLearningProgress } from "@/src/components/LearningProgressProvider";
 import { useCustomization } from "@/src/components/CustomizationProvider";
 import { MascotAvatar } from "@/src/components/MascotAvatar";
 import type { LessonTask } from "@/src/types/learning";
+import { expandedLessons } from "@/src/data/expanded-lessons";
+import { ExpandedLessonExperience } from "@/src/components/ExpandedLessonExperience";
 
 export function LessonExperience({ lessonId }: { lessonId: string }) {
+  return Object.hasOwn(expandedLessons, lessonId) ? <ExpandedLessonExperience key={lessonId} lessonId={lessonId} /> : <LegacyLessonExperience key={lessonId} lessonId={lessonId} />;
+}
+
+function LegacyLessonExperience({ lessonId }: { lessonId: string }) {
   const { progress, ready, warning, startLesson, recordAnswer, completeLesson } = useLearningProgress();
   const { settings } = useCustomization();
   const [answer, setAnswer] = useState("");
