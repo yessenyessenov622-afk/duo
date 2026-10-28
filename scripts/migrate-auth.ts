@@ -1,11 +1,11 @@
-import { loadEnvConfig } from "@next/env";
+import nextEnv from "@next/env";
 import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { getMigrations } from "better-auth/db/migration";
 import { authConfiguration, createAuth } from "../src/server/auth";
 import { getPool } from "../src/server/db";
 
-loadEnvConfig(process.cwd());
+nextEnv.loadEnvConfig(process.cwd());
 
 const pool = getPool();
 // Schema generation does not contact Google or need the production OAuth client.
