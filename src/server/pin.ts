@@ -131,7 +131,7 @@ export class PinService {
       [identity.session.id, identity.user.id],
     )).rows[0];
     if (!binding) {
-      if (!rawDevice) throw new ApiError(423, "device_missing", "Повтори вход через Google: устройство не распознано.");
+      if (!rawDevice) throw new ApiError(423, "device_missing", "Повтори вход по почте: устройство не распознано.");
       const deviceHash = digestDeviceToken(rawDevice);
       await client.query("INSERT INTO kiraquest_pin_devices (user_id, device_hash) VALUES ($1, $2) ON CONFLICT DO NOTHING", [identity.user.id, deviceHash]);
       await client.query(
@@ -140,17 +140,17 @@ export class PinService {
       );
       binding = (await client.query<Binding>("SELECT * FROM kiraquest_pin_sessions WHERE session_id = $1 AND user_id = $2", [identity.session.id, identity.user.id])).rows[0];
     }
-    if (!binding) throw new ApiError(401, "session_expired", "Сессия закончилась. Войди через Google снова.");
+    if (!binding) throw new ApiError(401, "session_expired", "Сессия закончилась. Войди по почте снова.");
     const device = (await client.query<PinRow>(
       "SELECT * FROM kiraquest_pin_devices WHERE user_id = $1 AND device_hash = $2 FOR UPDATE",
       [identity.user.id, binding.device_hash],
     )).rows[0];
-    if (!device) throw new ApiError(423, "device_missing", "Устройство не распознано. Повтори вход через Google.");
+    if (!device) throw new ApiError(423, "device_missing", "Устройство не распознано. Повтори вход по почте.");
     // The device lock may have waited for a manual lock, PIN change or reset.
     // Read its session binding again after that lock, otherwise an old unlocked
     // snapshot could survive an operation that has just invalidated it.
     binding = (await client.query<Binding>("SELECT * FROM kiraquest_pin_sessions WHERE session_id = $1 AND user_id = $2", [identity.session.id, identity.user.id])).rows[0];
-    if (!binding) throw new ApiError(401, "session_expired", "Сессия закончилась. Войди через Google снова.");
+    if (!binding) throw new ApiError(401, "session_expired", "Сессия закончилась. Войди по почте снова.");
     return { device, binding, cookieMatches: rawDevice !== null && digestDeviceToken(rawDevice) === binding.device_hash };
   }
 
@@ -182,13 +182,13 @@ export class PinService {
       const { device, binding } = bound;
       const now = this.now();
       const state = statusForDevice(bound, now);
-      if (!bound.cookieMatches) throw new ApiError(423, "device_changed", "Это устройство не совпадает с текущей сессией. Повтори вход через Google.");
+      if (!bound.cookieMatches) throw new ApiError(423, "device_changed", "Это устройство не совпадает с текущей сессией. Повтори вход по почте.");
       if (action === "lock") {
         await client.query("UPDATE kiraquest_pin_sessions SET unlocked_until = NULL WHERE user_id = $1 AND device_hash = $2", [identity.user.id, device.device_hash]);
         binding.unlocked_until = null;
         return { status: statusForDevice(bound, now) };
       }
-      if (state.retryAt) throw new ApiError(429, "pin_rate_limited", "Слишком много попыток. Подожди 15 минут или восстанови доступ через Google.", (state.retryAt - now) / 1000);
+      if (state.retryAt) throw new ApiError(429, "pin_rate_limited", "Слишком много попыток. Подожди 15 минут или восстанови доступ по почте.", (state.retryAt - now) / 1000);
       if (action === "setup" && device.pin_hash) throw new ApiError(409, "pin_already_enabled", "PIN уже включён. Для изменения подтверди текущий PIN.");
       if (action !== "setup" && !device.pin_hash) throw new ApiError(409, "pin_not_enabled", "На этом устройстве PIN не включён.");
 
@@ -210,7 +210,7 @@ export class PinService {
           await client.query("UPDATE kiraquest_pin_devices SET failed_attempts = $3, blocked_until = $4 WHERE user_id = $1 AND device_hash = $2", [identity.user.id, device.device_hash, attempts, blockedUntil]);
           if (blockedUntil) {
             await client.query("UPDATE kiraquest_pin_sessions SET unlocked_until = NULL WHERE user_id = $1 AND device_hash = $2", [identity.user.id, device.device_hash]);
-            return { error: new ApiError(429, "pin_rate_limited", "Слишком много попыток. Подожди 15 минут или восстанови доступ через Google.", PIN_BLOCK_MS / 1000) };
+            return { error: new ApiError(429, "pin_rate_limited", "Слишком много попыток. Подожди 15 минут или восстанови доступ по почте.", PIN_BLOCK_MS / 1000) };
           }
           return { error: new ApiError(403, "incorrect_pin", `Неверный PIN. Осталось попыток: ${PIN_MAX_ATTEMPTS - attempts}.`) };
         }
@@ -242,7 +242,7 @@ export class PinService {
       const now = this.now();
       const previous = timestamp(device.last_recovery_at);
       if (previous !== null && now - previous < 60_000) {
-        throw new ApiError(429, "recovery_rate_limited", "Подожди минуту перед повторной попыткой восстановления через Google.", (60_000 - (now - previous)) / 1000);
+        throw new ApiError(429, "recovery_rate_limited", "Подожди минуту перед повторной попыткой восстановления по почте.", (60_000 - (now - previous)) / 1000);
       }
       // Internal Better Auth API calls bypass its HTTP rate limiter, so the
       // device row also serializes a server-side recovery cooldown.
@@ -261,14 +261,14 @@ export class PinService {
       const tokenHash = digestDeviceToken(rawRecovery);
       const candidate = (await client.query<RecoveryRow>("SELECT * FROM kiraquest_pin_recoveries WHERE token_hash = $1", [tokenHash])).rows[0];
       const now = this.now();
-      if (!candidate || candidate.user_id !== identity.user.id) throw new ApiError(403, "recovery_invalid", "Восстановление не подтверждено. Выбери тот же аккаунт Google и повтори попытку.");
+      if (!candidate || candidate.user_id !== identity.user.id) throw new ApiError(403, "recovery_invalid", "Восстановление не подтверждено. Выбери ту же почту и повтори попытку.");
       // Use the same device -> recovery lock order as createRecovery. The
       // challenge is re-read only after acquiring the device row lock.
       await client.query("SELECT user_id FROM kiraquest_pin_devices WHERE user_id = $1 AND device_hash = $2 FOR UPDATE", [identity.user.id, candidate.device_hash]);
       const challenge = (await client.query<RecoveryRow>("SELECT * FROM kiraquest_pin_recoveries WHERE token_hash = $1 FOR UPDATE", [tokenHash])).rows[0];
       if (!challenge || new Date(challenge.expires_at).getTime() <= now || challenge.user_id !== identity.user.id
         || challenge.old_session_id === identity.session.id || identity.session.createdAt.getTime() < new Date(challenge.created_at).getTime()) {
-        throw new ApiError(403, "recovery_invalid", "Восстановление не подтверждено. Выбери тот же аккаунт Google и повтори попытку.");
+        throw new ApiError(403, "recovery_invalid", "Восстановление не подтверждено. Выбери ту же почту и повтори попытку.");
       }
       // Consume first; the entire reset and session revocation commit together.
       await client.query("DELETE FROM kiraquest_pin_recoveries WHERE token_hash = $1", [digestDeviceToken(rawRecovery)]);
@@ -304,8 +304,8 @@ export async function requireUnlocked(request: Request, identity: SessionIdentit
 
 function assertUnlocked(state: PinStatus): void {
   if (state.locked) throw new ApiError(423, state.deviceChanged ? "device_changed" : "app_locked", state.deviceChanged
-    ? "Устройство не распознано. Повтори вход через Google."
-    : "Разблокируй KiraQuest с помощью PIN или восстанови доступ через Google.");
+    ? "Устройство не распознано. Повтори вход по почте."
+    : "Разблокируй KiraQuest с помощью PIN или восстанови доступ по почте.");
 }
 
 export async function withUnlocked<T>(request: Request, identity: SessionIdentity, work: (client: PoolClient) => Promise<T>): Promise<T> {

@@ -16,10 +16,10 @@ export function AccountBoundary({ children }: { children: ReactNode }) {
 
 export function AccountStatus() {
   const { user, status, configured } = useAccount();
-  return <div className="account-status">{user ? <Link href="/profile">{status === "locked" ? "Аккаунт заблокирован" : user.name}</Link> : <Link href="/sign-in">{configured ? "Войти через Google" : "Гостевой режим"}</Link>}</div>;
+  return <div className="account-status">{user ? <Link href="/profile">{status === "locked" ? "Аккаунт заблокирован" : user.name}</Link> : <Link href="/sign-in">{configured ? "Войти по почте" : "Гостевой режим"}</Link>}</div>;
 }
 
 export function AccountStorageNote() {
   const { user } = useAccount();
-  return <p className="stage-disclosure">{user ? "Учебный прогресс и оформление сохраняются в твоём аккаунте на сервере. Статус сохранения показан над страницей." : "Гостевой прогресс и оформление сохраняются в этом браузере. Войди через Google в профиле, чтобы продолжать на других устройствах."}</p>;
+  return <p className="stage-disclosure">{user ? "Учебный прогресс и оформление сохраняются в твоём аккаунте на сервере. Статус сохранения показан над страницей." : "Гостевой прогресс и оформление сохраняются в этом браузере. Войди по почте в профиле, чтобы продолжать на других устройствах."}</p>;
 }

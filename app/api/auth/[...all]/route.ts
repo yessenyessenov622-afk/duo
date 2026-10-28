@@ -1,5 +1,7 @@
-import { getAuth, requireSession } from "@/src/server/auth";
+import { authConfiguration, getAuth, requireSession } from "@/src/server/auth";
 import { ApiError, apiError, assertSameOrigin, PRIVATE_HEADERS, readJson } from "@/src/server/http";
+import { getPool } from "@/src/server/db";
+import { createHmac } from "node:crypto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,8 +32,35 @@ export async function POST(request: Request) {
       if (request.headers.has("x-kiraquest-account")) await requireSession(request);
       return privateResponse(await getAuth().handler(request));
     }
-    if (path !== "/api/auth/sign-in/social") throw new ApiError(404, "not_found", "Такого действия нет.");
     const input = await readJson(request, 4096);
+    if (path === "/api/auth/email-otp/send-verification-otp" || path === "/api/auth/sign-in/email-otp") {
+      const config = authConfiguration();
+      if (!config?.mail) throw new ApiError(503, "auth_not_configured", "Вход по почте пока не настроен.");
+      const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
+      if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new ApiError(400, "invalid_email", "Проверь адрес электронной почты.");
+      const sending = path.endsWith("send-verification-otp");
+      if (!sending && (typeof input.otp !== "string" || !/^\d{6}$/.test(input.otp))) throw new ApiError(400, "invalid_code", "Введи шестизначный код.");
+      if (sending) {
+        const digest = createHmac("sha256", config.secret).update(`otp-cooldown:${email}`).digest("hex");
+        const claimed = await getPool().query("INSERT INTO kiraquest_otp_send_limits (address_hash, last_sent_at) VALUES ($1, CURRENT_TIMESTAMP) ON CONFLICT (address_hash) DO UPDATE SET last_sent_at = CURRENT_TIMESTAMP WHERE kiraquest_otp_send_limits.last_sent_at <= CURRENT_TIMESTAMP - INTERVAL '60 seconds' RETURNING address_hash", [digest]);
+        if (!claimed.rowCount) throw new ApiError(429, "otp_cooldown", "Подожди минуту перед повторной отправкой.", 60);
+      } else {
+        // A Google-only identity must not be silently linked to a new login method.
+        const linked = await getPool().query('SELECT 1 FROM "user" u JOIN "account" a ON a."userId" = u.id WHERE lower(u.email) = $1 AND a."providerId" = $2 LIMIT 1', [email, "google"]);
+        if (linked.rowCount) throw new ApiError(400, "otp_failed", "Код неверен, истёк или уже использован. Запроси новый код и повтори.");
+      }
+      const headers = new Headers(request.headers);
+      headers.delete("content-length"); headers.set("content-type", "application/json");
+      const normalized = new Request(request.url, { method: "POST", headers, body: JSON.stringify(sending ? { email, type: "sign-in" } : { email, otp: input.otp, name: "Ученик" }) });
+      const response = await getAuth().handler(normalized);
+      if (!response.ok) throw new ApiError(response.status === 429 ? 429 : 400, "otp_failed", sending ? "Не удалось отправить код. Попробуй позже." : "Код неверен, истёк или уже использован. Запроси новый код и повтори.");
+      // Better Auth's response also contains the session token. Only cookies leave this boundary.
+      const responseHeaders = new Headers(response.headers);
+      for (const [name, value] of Object.entries(PRIVATE_HEADERS)) responseHeaders.set(name, value);
+      responseHeaders.set("content-type", "application/json"); responseHeaders.delete("content-length");
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: responseHeaders });
+    }
+    if (path !== "/api/auth/sign-in/social") throw new ApiError(404, "not_found", "Такого действия нет.");
     if (input.provider !== "google" || input.idToken !== undefined || input.scopes !== undefined || input.additionalParams !== undefined) {
       throw new ApiError(400, "invalid_sign_in", "Используй кнопку «Продолжить с Google».");
     }

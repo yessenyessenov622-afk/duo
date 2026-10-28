@@ -3,6 +3,9 @@ import "server-only";
 import { isIP } from "node:net";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
+import { emailOTP } from "better-auth/plugins";
+import { createHmac } from "node:crypto";
+import { deliverOtpMail, otpMailConfiguration, type OtpMailConfig } from "./otp-mail";
 import type { Pool } from "pg";
 import { getPool } from "./db";
 import { ApiError } from "./http";
@@ -12,24 +15,25 @@ export type SessionIdentity = {
   session: { id: string; createdAt: Date; expiresAt: Date; token: string };
 };
 
-export type AuthConfiguration = { databaseURL: string; baseURL: string; secret: string; clientId: string; clientSecret: string };
+export type AuthConfiguration = { databaseURL: string; baseURL: string; secret: string; clientId: string; clientSecret: string; mail?: OtpMailConfig | null };
 
 export function authConfiguration(env: Record<string, string | undefined> = process.env): AuthConfiguration | null {
   const { DATABASE_URL, BETTER_AUTH_URL, BETTER_AUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = env;
-  if (!DATABASE_URL || !BETTER_AUTH_URL || !BETTER_AUTH_SECRET || BETTER_AUTH_SECRET.length < 32 || !GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) return null;
+  const mail = otpMailConfiguration(env);
+  if (!DATABASE_URL || !BETTER_AUTH_URL || !BETTER_AUTH_SECRET || BETTER_AUTH_SECRET.length < 32 || (!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) && !mail)) return null;
   try {
     const url = new URL(BETTER_AUTH_URL);
     // Secure cookies are never weakened for the current HTTP-only EC2 address.
     if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash || url.pathname !== "/") return null;
     if (env.NODE_ENV === "production" && (isIP(url.hostname) || url.hostname === "localhost" || !url.hostname.includes("."))) return null;
-    return { databaseURL: DATABASE_URL, baseURL: url.origin, secret: BETTER_AUTH_SECRET, clientId: GOOGLE_CLIENT_ID, clientSecret: GOOGLE_CLIENT_SECRET };
+    return { databaseURL: DATABASE_URL, baseURL: url.origin, secret: BETTER_AUTH_SECRET, clientId: GOOGLE_CLIENT_ID ?? "", clientSecret: GOOGLE_CLIENT_SECRET ?? "", mail };
   } catch { return null; }
 }
 
 export function isAuthConfigured(): boolean { return authConfiguration() !== null; }
 
 /** The factory also permits testing the real adapter against an isolated DB. */
-export function createAuth(config: AuthConfiguration, database: Pool) {
+export function createAuth(config: AuthConfiguration, database: Pool, sendOtp = deliverOtpMail) {
   return betterAuth({
     appName: "KiraQuest",
     baseURL: config.baseURL,
@@ -37,7 +41,7 @@ export function createAuth(config: AuthConfiguration, database: Pool) {
     secret: config.secret,
     database,
     emailAndPassword: { enabled: false },
-    socialProviders: {
+    socialProviders: config.clientId && config.clientSecret ? {
       google: {
         clientId: config.clientId,
         clientSecret: config.clientSecret,
@@ -47,7 +51,7 @@ export function createAuth(config: AuthConfiguration, database: Pool) {
         accessType: "online",
         prompt: "select_account",
       },
-    },
+    } : {},
     account: {
       accountLinking: { enabled: false, disableImplicitLinking: true },
       encryptOAuthTokens: true,
@@ -77,14 +81,22 @@ export function createAuth(config: AuthConfiguration, database: Pool) {
     },
     telemetry: { enabled: false },
     logger: { disabled: true },
-    plugins: [nextCookies()],
+    plugins: [
+      ...(config.mail ? [emailOTP({
+        otpLength: 6, expiresIn: 300, allowedAttempts: 5,
+        storeOTP: { hash: async (otp) => createHmac("sha256", config.secret).update(`kiraquest-email-otp:${otp}`).digest("hex") },
+        rateLimit: { window: 60, max: 5 },
+        sendVerificationOTP: async ({ email, otp }) => sendOtp(config.mail!, email, otp),
+      })] : []),
+      nextCookies(),
+    ],
   });
 }
 
 let auth: ReturnType<typeof createAuth> | undefined;
 export function getAuth(): ReturnType<typeof createAuth> {
   const config = authConfiguration();
-  if (!config) throw new ApiError(503, "auth_not_configured", "Вход через Google пока не настроен владельцем KiraQuest.");
+  if (!config) throw new ApiError(503, "auth_not_configured", "Вход пока не настроен владельцем KiraQuest.");
   return auth ??= createAuth(config, getPool());
 }
 
@@ -92,7 +104,7 @@ export function getAuth(): ReturnType<typeof createAuth> {
 export async function requireSession(request: Request, authInstance = getAuth()): Promise<SessionIdentity> {
   const identity = await authInstance.api.getSession({ headers: request.headers, query: { disableCookieCache: true } });
   if (!identity || identity.session.expiresAt.getTime() <= Date.now()) {
-    throw new ApiError(401, "session_expired", "Войди через Google, чтобы продолжить. Сессия закончилась или ты вышел из аккаунта.");
+    throw new ApiError(401, "session_expired", "Войди, чтобы продолжить. Сессия закончилась или ты вышел из аккаунта.");
   }
   const expected = request.headers.get("x-kiraquest-account");
   if (expected && expected !== identity.user.id) {

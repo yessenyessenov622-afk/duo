@@ -16,12 +16,11 @@ type SyncStatus = "idle" | "pending" | "saved" | "error";
 type Guest = { progress: LearningProgress; settings: CustomizationSettings; importId: string; preferences: AccountPreferences };
 type Patch = { progress?: LearningProgress; settings?: CustomizationSettings; preferences?: AccountData["preferences"]; resetProgress?: boolean };
 type AccountContextValue = {
-  status: Status; configured: boolean; user: User | null; pin: PinStatus;
+  status: Status; configured: boolean; googleConfigured: boolean; user: User | null; pin: PinStatus;
   data: AccountData; error: string; syncStatus: SyncStatus; guest: Guest | null;
   ready: boolean; update: (patch: Patch) => boolean; refresh: () => Promise<void>;
   retrySync: () => void; signOut: (discardUnsaved?: boolean) => Promise<void>; importGuest: (useGuestSettings: boolean) => Promise<void>;
   dismissGuest: () => void; pinAction: (action: string, fields?: Record<string, string>) => Promise<void>;
-  recoverPin: () => Promise<void>;
 };
 const AccountContext = createContext<AccountContextValue | null>(null);
 const IMPORT_KEY = "kiraquest.guest-import-id.v1";
@@ -76,6 +75,7 @@ function findGuest(): Guest | null {
 export function AccountProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>("loading");
   const [configured, setConfigured] = useState(false);
+  const [googleConfigured, setGoogleConfigured] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [pin, setPin] = useState<PinStatus>(emptyPin);
   const [data, setData] = useState<AccountData>(emptyData);
@@ -117,10 +117,11 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     if (transitioning.current) return;
     const requestId = ++refreshSequence.current;
     try {
-      const session = await accountRequest<{ configured: boolean; user: User | null; pin: PinStatus }>("/api/account/session");
+      const session = await accountRequest<{ configured: boolean; googleConfigured?: boolean; user: User | null; pin: PinStatus }>("/api/account/session");
       if (requestId !== refreshSequence.current) return;
       checkedAt.current = Date.now();
       setConfigured(session.configured);
+      setGoogleConfigured(session.googleConfigured === true);
       const oldUser = state.current.user;
       if (oldUser?.id !== session.user?.id) {
         clearPrivate(); guestDismissed.current = false;
@@ -132,7 +133,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       if (!session.user) {
         const stored = guestData();
         setData(stored.data); state.current.data = stored.data;
-        setError(oldUser ? "Сессия закончилась. Войди через Google снова." : stored.warning);
+        setError(oldUser ? "Сессия закончилась. Войди снова." : stored.warning);
         setStatus("guest"); state.current.status = "guest";
         return;
       }
@@ -316,14 +317,6 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     } finally { if (stamp === generation.current) { busy.current = false; importing.current = false; } }
   }, [guest]);
 
-  const recoverPin = useCallback(async () => {
-    const response = await accountRequest<{ url: string }>("/api/account/recovery/start", { method: "POST", body: "{}" }, state.current.user?.id);
-    const target = new URL(response.url);
-    if (target.protocol !== "https:" || target.hostname !== "accounts.google.com") throw new Error("Google не вернул ожидаемый адрес входа.");
-    clearPrivate(); setStatus("loading"); state.current.status = "loading";
-    window.location.assign(target.href);
-  }, [clearPrivate]);
-
   useEffect(() => {
     void refresh();
     const revalidate = () => { if (!document.hidden && Date.now() - checkedAt.current > 10_000) void refresh(); };
@@ -348,7 +341,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(id);
   }, [status, pin.enabled, pin.unlockExpiresAt, clearPrivate, refresh]);
 
-  return <AccountContext.Provider value={{ status, configured, user, pin, data, error, syncStatus, guest, ready: status === "ready" || status === "guest", update, refresh, retrySync: () => { setSyncStatus("pending"); void sync.current(); }, signOut, importGuest, dismissGuest: () => { guestDismissed.current = true; setGuest(null); }, pinAction, recoverPin }}>{children}</AccountContext.Provider>;
+  return <AccountContext.Provider value={{ status, configured, googleConfigured, user, pin, data, error, syncStatus, guest, ready: status === "ready" || status === "guest", update, refresh, retrySync: () => { setSyncStatus("pending"); void sync.current(); }, signOut, importGuest, dismissGuest: () => { guestDismissed.current = true; setGuest(null); }, pinAction }}>{children}</AccountContext.Provider>;
 }
 
 export function useAccount() { const value = useContext(AccountContext); if (!value) throw new Error("useAccount requires AccountProvider"); return value; }
