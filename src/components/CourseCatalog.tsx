@@ -5,14 +5,19 @@ import type { CSSProperties } from "react";
 import { learningCourses } from "@/src/data/learning-map";
 import { useLearningProgress } from "@/src/components/LearningProgressProvider";
 import { useCustomization } from "@/src/components/CustomizationProvider";
+import { useState } from "react";
+import { FOCUS_COURSE_IDS } from "@/src/data/focus-courses";
 
 export function CourseCatalog() {
   const { progress, ready } = useLearningProgress();
   const { settings } = useCustomization();
+  const [showAll, setShowAll] = useState(false);
+  const focus = learningCourses.filter((course) => FOCUS_COURSE_IDS.some((id) => id === course.id));
+  const courses = showAll ? [...focus, ...learningCourses.filter((course) => !FOCUS_COURSE_IDS.some((id) => id === course.id))] : focus;
   return <section className="course-catalog" aria-label={settings.visualStyle === "retro-desktop" ? "Библиотека курсов" : "Каталог практических направлений"}>
-    <header><span className="eyebrow">НАВЫКИ ДЛЯ ПОВСЕДНЕВНОЙ ЖИЗНИ</span><h2>Выбери направление</h2><p>Короткие уроки идут от простых решений к самостоятельному плану. Все денежные суммы в задачах учебные.</p></header>
+    <header><span className="eyebrow">ТВОЙ УЧЕБНЫЙ ПУТЬ</span><h2>Выбери направление</h2><p>Начни с английского, веб-разработки или цифровых навыков. Другие направления остаются доступными.</p><button type="button" className="text-button" aria-expanded={showAll} onClick={() => setShowAll(!showAll)}>{showAll ? "Показать основные направления" : "Показать все направления"}</button></header>
     <div className="course-catalog-grid">
-      {learningCourses.map((course) => {
+      {courses.map((course) => {
         const lessons = course.chapters.flatMap((chapter) => chapter.lessons);
         const completed = lessons.filter((lesson) => progress.completedLessons.includes(lesson.id)).length;
         const next = lessons.find((lesson) => !progress.completedLessons.includes(lesson.id));
