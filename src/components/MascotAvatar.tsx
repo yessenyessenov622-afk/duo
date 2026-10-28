@@ -30,6 +30,6 @@ export function MascotAvatar({ id, accessory = "none", className = "", state = "
     {mascot.id === "neo" ? <>
       <img className="neo-illustration" src={`/mascots/neo-${state === "idle" || state === "thinking" ? "study" : state === "correct" || state === "celebrate" ? "celebrate" : state}.png`} alt="" />
       {accessory !== "none" && <span className="neo-accessory" aria-hidden="true">{({ glasses: "◉", scarf: "❣", star: "★", halo: "◌" } as Record<string, string>)[accessory]}</span>}
-    </> : <><img className="team-illustration" src={`/mascots/${mascot.id}.png`} alt="" />{accessory !== "none" && <span className="neo-accessory" aria-hidden="true">{({ glasses: "◉", scarf: "❣", star: "★", halo: "◌" } as Record<string, string>)[accessory]}</span>}</>}
+    </> : <><img className="team-illustration" src={`/mascots/${mascot.id}${state === "greet" ? "" : `-${state === "idle" || state === "thinking" ? "study" : state === "correct" || state === "celebrate" ? "celebrate" : state}`}.png`} alt="" />{accessory !== "none" && <span className="neo-accessory" aria-hidden="true">{({ glasses: "◉", scarf: "❣", star: "★", halo: "◌" } as Record<string, string>)[accessory]}</span>}</>}
   </div>;
 }
