@@ -6,7 +6,7 @@ import { mascotPreviews } from "@/src/data/mascots";
 export const SETTINGS_KEY = "kiraquest.customization.v1";
 const SETTINGS_VERSION = 7;
 export const DEFAULT_SETTINGS: CustomizationSettings = {
-  version: SETTINGS_VERSION, visualStyle: "soft-brutalism-lite", theme: "lavender", themeMode: "light", cardRadius: 16, shadowIntensity: 0.65, animationIntensity: 1, accentMode: "theme",
+  version: SETTINGS_VERSION, visualStyle: "calm", theme: "lavender", themeMode: "light", cardRadius: 16, shadowIntensity: 0.65, animationIntensity: 1, accentMode: "theme",
   accent: "#8064d8", background: "quiet", customWallpaperId: "wallpaper-default", wallpaperBlur: 0, wallpaperDim: 0.08, wallpaperScale: 1, wallpaperX: 50, wallpaperY: 50, customBackground: "#f4f0fb",
   fontScale: 1, density: "comfortable", mascot: { id: "ren", accessory: "none", looks: {} },
   animations: true, sounds: false, quoteFrequency: "sometimes", largeText: false,
@@ -47,7 +47,12 @@ export function readSettings(): { settings: CustomizationSettings; warning: stri
   let raw: string | null;
   try { raw = window.localStorage.getItem(SETTINGS_KEY); }
   catch { return { settings: DEFAULT_SETTINGS, warning: "Браузер запретил доступ к настройкам. Разреши локальное хранение, чтобы сохранять оформление." }; }
-  if (!raw) return { settings: DEFAULT_SETTINGS, warning: "" };
+  if (!raw) {
+    const migrated = readLegacyProfileSettings();
+    if (!migrated) return { settings: DEFAULT_SETTINGS, warning: "" };
+    if (!writeSettings(migrated)) return { settings: migrated, warning: "Старые настройки сохранены для этой страницы, но браузер не разрешил записать их новый формат. Разреши локальное хранение, чтобы сохранить выбор." };
+    return { settings: migrated, warning: "" };
+  }
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Invalid settings");
@@ -78,7 +83,7 @@ function hasInvalidStoredSettings(source: Record<string, unknown>): boolean {
   const present = (key: string) => Object.prototype.hasOwnProperty.call(source, key);
   const invalid = (key: string, test: (value: unknown) => boolean) => present(key) && !test(source[key]);
   const color = (value: unknown) => typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
-  const boundedNumber = (key: string, min: number, max: number) => invalid(key, (value) => typeof value === "number" && Number.isFinite(value) && value >= min && value <= max);
+  const nonFiniteNumber = (key: string) => invalid(key, (value) => typeof value === "number" && Number.isFinite(value));
   if (invalid("version", (value) => typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= SETTINGS_VERSION)) return true;
   if (invalid("theme", (value) => typeof value === "string" && themes.includes(value as ThemeId))) return true;
   if (invalid("lastLightTheme", (value) => typeof value === "string" && themes.includes(value as ThemeId) && value !== "dark")) return true;
@@ -87,8 +92,8 @@ function hasInvalidStoredSettings(source: Record<string, unknown>): boolean {
   if (invalid("accentMode", (value) => value === "theme" || value === "custom")) return true;
   if (invalid("accent", color) || invalid("customBackground", color)) return true;
   if (invalid("background", (value) => typeof value === "string" && ["quiet", "stars", "library", "sakura", "forest", "ocean", "gradient", "dots", "grid", "paper", "abstract", "image", "custom"].includes(value))) return true;
-  if (invalid("customWallpaperId", (value) => typeof value === "string" && /^[a-zA-Z0-9-]{1,64}$/.test(value))) return true;
-  if (boundedNumber("cardRadius", 8, 24) || boundedNumber("shadowIntensity", 0, 1.5) || boundedNumber("animationIntensity", 0.5, 1.5) || boundedNumber("wallpaperBlur", 0, 12) || boundedNumber("wallpaperDim", 0, 0.45) || boundedNumber("wallpaperScale", 0.8, 1.6) || boundedNumber("wallpaperX", 0, 100) || boundedNumber("wallpaperY", 0, 100) || boundedNumber("fontScale", 0.9, 2)) return true;
+  if (invalid("customWallpaperId", (value) => typeof value === "string" && /^[a-zA-Z0-9._-]{1,128}$/.test(value))) return true;
+  if (["cardRadius", "shadowIntensity", "animationIntensity", "wallpaperBlur", "wallpaperDim", "wallpaperScale", "wallpaperX", "wallpaperY", "fontScale"].some(nonFiniteNumber)) return true;
   if (invalid("density", (value) => value === "compact" || value === "comfortable")) return true;
   if (["systemTheme", "animations", "sounds", "largeText"].some((key) => invalid(key, (value) => typeof value === "boolean"))) return true;
   if (invalid("quoteFrequency", (value) => value === "often" || value === "sometimes" || value === "minimal")) return true;
@@ -109,6 +114,38 @@ function hasInvalidStoredSettings(source: Record<string, unknown>): boolean {
     }
   }
   return false;
+}
+
+function readLegacyProfileSettings(): CustomizationSettings | null {
+  let raw: string | null;
+  try { raw = window.localStorage.getItem("kiraquest.progress.v1"); }
+  catch { return null; }
+  if (!raw) return null;
+  try {
+    const profile: unknown = JSON.parse(raw);
+    if (!profile || typeof profile !== "object" || Array.isArray(profile)) return null;
+    const stored = profile as Record<string, unknown>;
+    const legacySettings = stored.settings && typeof stored.settings === "object" && !Array.isArray(stored.settings)
+      ? stored.settings as Record<string, unknown>
+      : {};
+    const mascotId = typeof stored.selectedMascotId === "string" && mascotPreviews.some((entry) => entry.id === stored.selectedMascotId)
+      ? stored.selectedMascotId
+      : DEFAULT_SETTINGS.mascot.id;
+    const theme = typeof legacySettings.theme === "string" && themes.includes(legacySettings.theme as ThemeId)
+      ? legacySettings.theme as ThemeId
+      : DEFAULT_SETTINGS.theme;
+    const hasLegacyPreferences = "selectedMascotId" in stored || "theme" in legacySettings || "reducedMotion" in legacySettings;
+    if (!hasLegacyPreferences) return null;
+    return normalizeSettings({
+      ...DEFAULT_SETTINGS,
+      theme: theme === "dark" ? DEFAULT_SETTINGS.theme : theme,
+      themeMode: theme === "dark" ? "dark" : "light",
+      animations: legacySettings.reducedMotion === true ? false : DEFAULT_SETTINGS.animations,
+      mascot: { ...DEFAULT_SETTINGS.mascot, id: mascotId },
+    });
+  } catch {
+    return null;
+  }
 }
 
 export function writeSettings(settings: CustomizationSettings): boolean {

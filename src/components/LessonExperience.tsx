@@ -54,6 +54,17 @@ export function LessonExperience({ lessonId }: { lessonId: string }) {
   const { course, chapter, lesson } = match;
   const task = lesson.task;
   const mode = task.mode ?? "single";
+  const lessonHint = task.hint ?? (mode === "budget"
+    ? "Сначала покрой минимальные расходы, затем распредели оставшуюся сумму так, чтобы остаток стал нулевым."
+    : mode === "schedule"
+      ? "Сравни интервалы целиком: следующее дело должно начаться после окончания предыдущего, а форма — завершиться до срока."
+      : mode === "matching"
+        ? "Сопоставь каждую строку с вариантом, который выполняет ту же роль."
+        : mode === "sequence"
+          ? "Подумай, какие действия нужны раньше, чтобы следующие стали возможны."
+          : mode === "multi"
+            ? "Проверь каждый пункт отдельно: верными могут быть несколько."
+            : "Сопоставь условие задания с контекстом и исключи варианты, которые не решают задачу.");
   const selectedOptions = answer ? answer.split("\u001f") : [];
   const status = statusForLesson(course.id, lesson.id, progress);
   const blocked = status === "locked";
@@ -116,7 +127,7 @@ export function LessonExperience({ lessonId }: { lessonId: string }) {
         {mode === "matching" && task.matching && <fieldset className="mechanic-fieldset"><legend>Сопоставление</legend><div className="matching-list">{task.matching.pairs.map((pair) => <label className="matching-row" key={pair.left}><span>{pair.left}</span><select value={matchingAnswers[pair.left] ?? ""} aria-label={`Формат для: ${pair.left}`} onChange={(event) => { setMatchingAnswers((current) => ({ ...current, [pair.left]: event.target.value })); setChecked(false); }}><option value="">Выбери файл</option>{task.matching!.choices.map((choice) => <option key={choice} value={choice}>{choice}</option>)}</select></label>)}</div></fieldset>}
         {mode === "sequence" && task.sequence && <fieldset className="mechanic-fieldset"><legend>Порядок действий</legend><ol className="sequence-step-list">{stepOrder.map((id, index) => { const item = task.sequence!.items.find((entry) => entry.id === id); if (!item) return null; return <li key={id}><span className="sequence-position">{index + 1}</span><span className="sequence-step-label">{item.label}</span><button type="button" disabled={index === 0} aria-label={`Поднять выше: ${item.label}`} onClick={() => { moveStep(index, -1); setChecked(false); }}>↑</button><button type="button" disabled={index === stepOrder.length - 1} aria-label={`Опустить ниже: ${item.label}`} onClick={() => { moveStep(index, 1); setChecked(false); }}>↓</button></li>; })}</ol><p className="mechanic-keyboard-note">Кнопки можно выбирать клавишами Tab и Enter или Space.</p></fieldset>}
         {checked && <div className={`lesson-answer-explanation${correct ? " explanation-correct" : " explanation-retry"}`} role="status"><b>{correct ? "Верно!" : "Попробуй ещё раз — ты справишься."}</b><p>{lesson.task.explanation}</p></div>}
-        <div className="lesson-question-footer"><div><span>Награда начисляется только при первом завершении.</span><button type="button" className="lesson-hint-button" aria-expanded={hintOpen} onClick={() => setHintOpen((open) => !open)}>{hintOpen ? "Скрыть подсказку" : "Попросить подсказку"}</button>{hintOpen && <p className="lesson-hint-copy" role="status">{mode === "budget" ? "Сначала покрой минимальные расходы, затем распредели оставшуюся сумму так, чтобы остаток стал нулевым." : mode === "schedule" ? "Сравни интервалы целиком: следующее дело должно начаться после окончания предыдущего, а форма — завершиться до срока." : mode === "matching" ? "Смотри на содержимое и формат: обычный текст, таблица с разделителями или форматированный документ." : mode === "sequence" ? "Подготовь поверхность до протирания; после очистки можно возвращать нужные предметы." : "Сравни последствия вариантов и выбери тот, который помогает решить задачу безопасно и выполнимо."}</p>}</div>{checked && correct ? <button type="button" className="button button-dark" onClick={finish}>Завершить урок <span aria-hidden="true">→</span></button> : <button type="button" className="button button-dark" disabled={!hasResponse} onClick={submitAnswer}>Проверить ответ <span aria-hidden="true">→</span></button>}</div>
+        <div className="lesson-question-footer"><div><span>Награда начисляется только при первом завершении.</span><button type="button" className="lesson-hint-button" aria-expanded={hintOpen} onClick={() => setHintOpen((open) => !open)}>{hintOpen ? "Скрыть подсказку" : "Попросить подсказку"}</button>{hintOpen && <p className="lesson-hint-copy" role="status">{lessonHint}</p>}</div>{checked && correct ? <button type="button" className="button button-dark" onClick={finish}>Завершить урок <span aria-hidden="true">→</span></button> : <button type="button" className="button button-dark" disabled={!hasResponse} onClick={submitAnswer}>Проверить ответ <span aria-hidden="true">→</span></button>}</div>
       </div>
       {status === "completed" && <p className="lesson-repeat-note">Этот урок уже пройден. Повторение поможет закрепить материал, но не начислит XP повторно.</p>}
     </>}

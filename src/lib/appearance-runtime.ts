@@ -32,7 +32,7 @@ export function createAppearanceRuntime(palettes: Record<ThemeId, Palette>, defa
       accentMode: value.accentMode === "custom" || (value.accentMode === undefined && isColor(value.accent) && value.accent.toLowerCase() !== defaults.accent) ? "custom" : "theme",
       accent: isColor(value.accent) ? value.accent : defaults.accent,
       background: ["quiet", "stars", "library", "sakura", "forest", "ocean", "gradient", "dots", "grid", "paper", "abstract", "image", "custom"].includes(value.background ?? "") ? value.background! : defaults.background,
-      customWallpaperId: typeof value.customWallpaperId === "string" && /^[a-zA-Z0-9-]{1,64}$/.test(value.customWallpaperId) ? value.customWallpaperId : defaults.customWallpaperId,
+      customWallpaperId: typeof value.customWallpaperId === "string" && /^[a-zA-Z0-9._-]{1,128}$/.test(value.customWallpaperId) ? value.customWallpaperId : defaults.customWallpaperId,
       wallpaperBlur: typeof value.wallpaperBlur === "number" && Number.isFinite(value.wallpaperBlur) ? Math.min(12, Math.max(0, value.wallpaperBlur)) : defaults.wallpaperBlur,
       wallpaperDim: typeof value.wallpaperDim === "number" && Number.isFinite(value.wallpaperDim) ? Math.min(0.45, Math.max(0, value.wallpaperDim)) : defaults.wallpaperDim,
       wallpaperScale: typeof value.wallpaperScale === "number" && Number.isFinite(value.wallpaperScale) ? Math.min(1.6, Math.max(0.8, value.wallpaperScale)) : defaults.wallpaperScale,

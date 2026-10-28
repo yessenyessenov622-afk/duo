@@ -27,3 +27,44 @@ html[data-reduce-motion="true"] .node-next .node-orbit{animation:none!important}
 .journey-path:has(.map-path-companion){padding-right:154px;min-height:126px;align-items:start}
 @media(max-width:760px){.map-path-companion{position:relative;top:auto;right:auto;grid-column:1;justify-self:end;width:112px;height:112px;margin-top:-2px}.journey-path:has(.map-path-companion){padding-right:2px;min-height:0}}
 @media(max-width:520px){.mechanic-fieldset{padding:11px}.budget-allocation-row,.schedule-event-row,.matching-row{grid-template-columns:minmax(0,1fr);gap:6px}.budget-input-wrap,.schedule-event-row select,.matching-row select{justify-self:stretch;width:100%;max-width:none}.budget-input-wrap input{flex:1;width:auto}.sequence-step-list li{grid-template-columns:30px minmax(0,1fr) 40px 40px;gap:5px;padding:6px}}
+
+/* A route circle represents one complete topic; individual lessons appear in its panel. */
+.map-course-level{padding:14px 18px 12px;border-top:1px solid #f0edf3}
+.map-course-level>header{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;margin-bottom:5px}
+.map-course-level>header>span{color:var(--course-accent);font-size:.55rem;font-weight:800;letter-spacing:.08em}
+.map-course-level>header h3{grid-column:1;margin:0;color:#393345;font:800 1rem 'Manrope',sans-serif}
+.map-course-level>header p{grid-column:1;margin:0;color:#898391;font-size:.7rem;line-height:1.5}
+.map-course-level>header small{grid-column:2;grid-row:1/4;color:#817b8b;font-size:.65rem;text-align:right}
+.map-course-level .world-chapters{padding:2px 0 4px;border:0}
+.map-course-level .world-chapters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 26px;padding:12px 8px}
+.map-course-level .journey-chapter{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0;padding:0 0 8px}
+.map-course-level .journey-chapter:nth-child(n+2){border-top:1px dashed #e9e4ed}
+.map-course-level .journey-path{position:relative;display:grid;place-items:center;width:100%;min-height:164px;margin:0;padding:0}
+.map-course-level .journey-path::before{position:absolute;top:43px;left:50%;z-index:0;width:calc(200% + 26px);height:3px;border:0;border-radius:3px;background:color-mix(in srgb,var(--course-accent) 28%,var(--line));content:""}
+.map-course-level .journey-chapter:nth-child(even) .journey-path::before,.map-course-level .journey-chapter:last-child .journey-path::before{display:none}
+.map-course-level .journey-node.topic-node{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;min-height:0;margin:0;padding:0 8px;border:0;border-radius:0;background:transparent;color:var(--ink,#302b3b);text-align:center;cursor:pointer}
+.topic-node .node-orbit{position:relative;display:grid;place-items:center;width:88px;height:88px;flex:none;padding:6px;border:0;border-radius:50%;background:conic-gradient(var(--course-accent) var(--topic-progress),color-mix(in srgb,var(--line) 78%,var(--surface)) 0);color:var(--course-accent);font-size:1.25rem;transition:transform .2s ease}
+.topic-node:hover .node-orbit{transform:translateY(-2px)}
+.topic-node .node-symbol{display:grid;place-items:center;width:100%;height:100%;border:1px solid color-mix(in srgb,var(--course-accent) 22%,var(--line));border-radius:50%;background:var(--surface);font-size:1.4rem}
+.topic-node .node-copy{display:grid;min-width:0;max-width:24ch;gap:3px}
+.topic-node .node-copy>b{color:inherit;font-size:.95rem;line-height:1.35}
+.topic-node .node-copy>small{color:var(--muted,#686471);font-size:.8rem;line-height:1.4;white-space:normal}
+.topic-node.node-completed .node-orbit{background:conic-gradient(#548d69 var(--topic-progress),color-mix(in srgb,var(--line) 78%,var(--surface)) 0)}
+.topic-node.node-next .node-orbit{filter:drop-shadow(0 3px 8px color-mix(in srgb,var(--course-accent) 22%,transparent))}
+.topic-node.node-available .node-orbit{background:conic-gradient(#d09b36 var(--topic-progress),color-mix(in srgb,var(--line) 78%,var(--surface)) 0)}
+.topic-node.node-locked{color:var(--muted,#686471)}
+.topic-node.node-locked .node-orbit{background:conic-gradient(var(--line) var(--topic-progress),color-mix(in srgb,var(--line) 78%,var(--surface)) 0)}
+.topic-node .node-cta{position:relative;z-index:1;min-height:36px;padding:7px 12px;border:1px solid color-mix(in srgb,var(--course-accent) 30%,var(--line));border-radius:18px;background:color-mix(in srgb,var(--course-accent) 10%,var(--surface));color:var(--ink);font-size:.8rem;font-weight:800;white-space:nowrap}
+.node-locked-copy{position:relative;z-index:1;max-width:24ch;color:var(--muted,#686471);font-size:.75rem;line-height:1.4}
+.topic-description{max-width:34ch;margin:0;color:var(--muted,#686471);font-size:.8rem;line-height:1.5;text-align:center}
+.topic-lesson-list{display:grid;gap:7px;margin:16px 0 0;padding:0;list-style:none}
+.topic-lesson-list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line,#eeedf0)}
+.topic-lesson-list li>span:first-child{display:grid;gap:3px;min-width:0}
+.topic-lesson-list b{font-size:.8rem;line-height:1.35}
+.topic-lesson-list small{color:var(--muted,#817b8b);font-size:.68rem}
+.topic-lesson-list .button{min-height:38px;padding:0 11px;font-size:.7rem;white-space:nowrap}
+.topic-lesson-locked{padding:8px;color:#888;font-size:.8rem}
+@media(max-width:700px){.map-course-level{padding:12px}.map-course-level>header h3{font-size:.95rem}.map-course-level>header small{font-size:.75rem}.map-course-level .world-chapters{grid-template-columns:minmax(0,1fr);gap:0;padding:8px 0}.map-course-level .journey-chapter{padding:8px 0 12px}.map-course-level .journey-chapter:not(:last-child)::after{position:absolute;bottom:-4px;left:50%;z-index:0;width:2px;height:24px;background:color-mix(in srgb,var(--course-accent) 28%,var(--line));content:""}.map-course-level .journey-path{min-height:0;padding:4px 0 10px}.map-course-level .journey-path::before{display:none}.map-course-level .journey-node.topic-node{gap:7px;padding:0 4px}.topic-node .node-orbit{width:76px;height:76px;padding:5px}.topic-node .node-copy>b{font-size:.9rem}.topic-node .node-copy>small{font-size:.8rem}.topic-node .node-cta{min-height:36px;padding:6px 12px;font-size:.8rem}.node-locked-copy{max-width:24ch;font-size:.75rem}.topic-description{font-size:.8rem}.topic-lesson-list li{align-items:flex-start}.topic-lesson-list .button{min-height:40px;padding-inline:10px}}
+.map-course-level .journey-path:has(.map-path-companion){grid-template-columns:minmax(0,1fr) 76px;min-height:76px;padding:0}
+.map-course-level .map-path-companion{position:relative;top:auto;right:auto;grid-column:2;grid-row:1;justify-self:center;width:72px;height:72px}
+@media(max-width:700px){.map-course-level .journey-path:has(.map-path-companion){grid-template-columns:minmax(0,1fr) 58px;min-height:64px}.map-course-level .map-path-companion{grid-column:2;width:56px;height:56px;margin:0}}

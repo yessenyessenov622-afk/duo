@@ -1,4 +1,5 @@
 import type { LearningCourse, LearningProgress } from "@/src/types/learning";
+import { technicalCourses } from "@/src/data/technical-courses";
 
 // Демо-задания отражают темы и идентификаторы уроков существующего vanilla-каталога.
 export const learningCourses: LearningCourse[] = [
@@ -56,6 +57,9 @@ export const learningCourses: LearningCourse[] = [
   },
 ];
 
+// Existing course and lesson IDs remain unchanged so saved progress remains valid.
+learningCourses.push(...technicalCourses);
+
 export const ALL_COURSES_ID = "all-courses";
 export const XP_PER_LESSON = 25;
 export const TOKENS_PER_LESSON = 5;
@@ -80,6 +84,20 @@ export function getLessonStatus(course: LearningCourse, lessonId: string, comple
   const nextLessonId = lessonIds.find((id) => !completedIds.includes(id));
   if (lessonId !== nextLessonId) return "locked" as const;
   return startedCourseIds.includes(course.id) ? "next" as const : "available" as const;
+}
+
+export function getTopicStatus(course: LearningCourse, topicId: string, completedIds: string[], startedCourseIds: string[]) {
+  const topic = course.chapters.find((item) => item.id === topicId);
+  if (!topic) return "locked" as const;
+  if (topic.lessons.every((lesson) => completedIds.includes(lesson.id))) return "completed" as const;
+  const nextTopic = course.chapters.find((item) => !item.lessons.every((lesson) => completedIds.includes(lesson.id)));
+  if (nextTopic?.id !== topicId) return "locked" as const;
+  return startedCourseIds.includes(course.id) || completedIds.some((id) => courseLessonIds(course).includes(id)) ? "next" as const : "available" as const;
+}
+
+export function topicProgress(topic: LearningCourse["chapters"][number], completedIds: string[]) {
+  const complete = topic.lessons.filter((lesson) => completedIds.includes(lesson.id)).length;
+  return { complete, total: topic.lessons.length, done: complete === topic.lessons.length };
 }
 
 export function completeLearningLesson(progress: LearningProgress, lessonId: string, today: string) {

@@ -12,7 +12,7 @@ export function HomeLearningPath() {
   const storedCourse = learningCourses.find((course) => course.id === progress.selectedCourseId);
   const preferred = storedCourse && (progress.startedCourses.includes(storedCourse.id) || progress.completedLessons.some((id) => storedCourse.chapters.some((chapter) => chapter.lessons.some((lesson) => lesson.id === id))))
     ? storedCourse
-    : learningCourses.find((course) => course.id === "life-budget");
+    : learningCourses[0];
   const orderedCourses = preferred ? [preferred, ...learningCourses.filter((course) => course.id !== preferred.id)] : learningCourses;
   const next = orderedCourses.map((course) => ({
     course,
@@ -26,15 +26,16 @@ export function HomeLearningPath() {
   const { course, lesson, lessons } = next;
   const completed = lessons.filter((item) => progress.completedLessons.includes(item.id)).length;
   const progressPercent = Math.round((completed / lessons.length) * 100);
+  const hasStarted = progress.startedCourses.includes(course.id) || completed > 0;
   const href = `/lessons?lesson=${encodeURIComponent(lesson.id)}`;
   return <section className="hero-panel home-hero home-learning-path" aria-labelledby="home-next-title">
     <div className="home-path-copy">
-      <span className="hero-kicker"><span aria-hidden="true">✦</span> ТВОЙ СЛЕДУЮЩИЙ ШАГ</span>
+      <span className="hero-kicker">Твой следующий шаг</span>
       <p className="home-path-course">{course.category} · {course.title}</p>
-      <h2 id="home-next-title">{progress.completedLessons.includes(lesson.id) ? "Повторить урок" : "Продолжить урок"}: {lesson.title}</h2>
+      <h2 id="home-next-title">{lesson.title}</h2>
       <p>{lesson.skillOutcome ?? course.description}</p>
       <div className="home-path-progress" role="img" aria-label={`В направлении пройдено ${completed} из ${lessons.length} уроков`}><span><i style={{ width: `${progressPercent}%` }} /></span><small>{completed} из {lessons.length} уроков</small></div>
-      <Link href={href} className="button button-dark">{progress.completedLessons.length ? "Продолжить урок" : "Начать первый урок"}<span aria-hidden="true">→</span></Link>
+      <Link href={href} className="button button-dark">{hasStarted ? "Продолжить урок" : "Начать урок"}<span aria-hidden="true">→</span></Link>
     </div>
     <MascotAvatar id={settings.mascot.id} accessory={settings.mascot.accessory} className="home-path-mascot" state="greet" />
   </section>;

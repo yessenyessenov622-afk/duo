@@ -6,6 +6,7 @@ export type LessonTask = {
   matching?: { pairs: { left: string; right: string }[]; choices: string[] };
   sequence?: { items: { id: string; label: string }[]; answer: string[]; initialOrder: string[] };
   context?: string;
+  hint?: string;
   prompt: string;
   options: string[];
   answer: string;
@@ -26,6 +27,16 @@ export type LearningChapter = {
   description: string;
   icon: string;
   lessons: LearningLesson[];
+  /** Stable level this theme belongs to. */
+  levelId?: string;
+};
+
+export type LearningLevel = {
+  id: string;
+  number: 1 | 2 | 3 | 4 | 5;
+  title: string;
+  description: string;
+  topicIds: string[];
 };
 
 export type LearningCourse = {
@@ -36,6 +47,7 @@ export type LearningCourse = {
   accent: string;
   description: string;
   chapters: LearningChapter[];
+  levels?: LearningLevel[];
 };
 
 export type LessonStatus = "completed" | "next" | "available" | "locked";
