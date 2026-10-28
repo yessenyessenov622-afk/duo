@@ -4,10 +4,12 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { learningCourses } from "@/src/data/learning-map";
 import { useLearningProgress } from "@/src/components/LearningProgressProvider";
+import { useCustomization } from "@/src/components/CustomizationProvider";
 
 export function CourseCatalog() {
   const { progress, ready } = useLearningProgress();
-  return <section className="course-catalog" aria-label="Каталог практических направлений">
+  const { settings } = useCustomization();
+  return <section className="course-catalog" aria-label={settings.visualStyle === "retro-desktop" ? "Библиотека курсов" : "Каталог практических направлений"}>
     <header><span className="eyebrow">НАВЫКИ ДЛЯ ПОВСЕДНЕВНОЙ ЖИЗНИ</span><h2>Выбери направление</h2><p>Короткие уроки идут от простых решений к самостоятельному плану. Все денежные суммы в задачах учебные.</p></header>
     <div className="course-catalog-grid">
       {learningCourses.map((course) => {

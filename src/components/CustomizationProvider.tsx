@@ -29,6 +29,9 @@ export function CustomizationProvider({ children }: { children: ReactNode }) {
     if (!ready) return;
     const root = document.documentElement;
     appearanceRuntime.apply(root, settings);
+    const systemTheme = window.matchMedia?.("(prefers-color-scheme: dark)");
+    const applySystemTheme = () => appearanceRuntime.apply(root, settings);
+    if (settings.themeMode === "system") systemTheme?.addEventListener("change", applySystemTheme);
     root.style.removeProperty("--wallpaper-image");
     let active = true;
     let imageUrl = "";
@@ -41,6 +44,7 @@ export function CustomizationProvider({ children }: { children: ReactNode }) {
     }
     return () => {
       active = false;
+      if (settings.themeMode === "system") systemTheme?.removeEventListener("change", applySystemTheme);
       root.style.removeProperty("--wallpaper-image");
       if (imageUrl) URL.revokeObjectURL(imageUrl);
     };

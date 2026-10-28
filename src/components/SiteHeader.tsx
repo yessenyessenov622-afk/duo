@@ -17,13 +17,10 @@ const pageNames: NavigationItem[] = [
 export function SiteHeader() {
   const pathname = usePathname();
   const { settings, ready, save, warning, dismissWarning } = useCustomization();
-  const toggleTheme = () => save({
-    ...settings,
-    systemTheme: false,
-    theme: settings.theme === "dark" ? settings.lastLightTheme : "dark",
-    lastLightTheme: settings.theme === "dark" ? settings.lastLightTheme : settings.theme,
-  });
-  const pageName = pageNames.find((page) => page.href === pathname)?.label ?? "KiraQuest";
+  const toggleTheme = () => save({ ...settings, themeMode: settings.themeMode === "dark" ? "light" : "dark" });
+  const pageName = settings.visualStyle === "retro-desktop"
+    ? pathname === "/lessons" ? "Библиотека курсов" : pathname === "/profile" ? "Карточка ученика" : pathname === "/studio" ? "Панель оформления" : pageNames.find((page) => page.href === pathname)?.label ?? "KiraQuest"
+    : pageNames.find((page) => page.href === pathname)?.label ?? "KiraQuest";
 
   return (
     <>
@@ -33,7 +30,7 @@ export function SiteHeader() {
       </div>
       <div className="top-actions">
         <FocusInterval />
-        <button type="button" className="theme-toggle" disabled={!ready} onClick={toggleTheme} aria-pressed={settings.theme === "dark"} aria-label={settings.theme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"}><span aria-hidden="true">{settings.theme === "dark" ? "☀" : "☾"}</span></button>
+        <button type="button" className="theme-toggle" disabled={!ready} onClick={toggleTheme} aria-pressed={settings.themeMode === "dark"} aria-label={settings.themeMode === "dark" ? "Включить светлую тему" : "Включить тёмную тему"}><span aria-hidden="true">{settings.themeMode === "dark" ? "☀" : "☾"}</span></button>
         <div
           className="demo-pill"
           role="status"

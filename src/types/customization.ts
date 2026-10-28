@@ -1,17 +1,18 @@
 export type ThemeId = "light" | "dark" | "lavender" | "amber" | "mint" | "sakura" | "ocean" | "forest" | "mono";
+export type PaletteId = Exclude<ThemeId, "dark">;
+export type ThemeMode = "light" | "dark" | "system";
 export type BackgroundId = "quiet" | "stars" | "library" | "sakura" | "forest" | "ocean" | "gradient" | "dots" | "grid" | "paper" | "abstract" | "image" | "custom";
-export type VisualStyleId = "calm" | "soft-brutalism-lite";
+export type VisualStyleId = "calm" | "soft-brutalism-lite" | "retro-desktop";
 export type MascotLook = { accessory: string; pose: "calm" | "curious" };
 export type MascotSettings = { id: string; accessory: string; looks: Record<string, MascotLook> };
 export type CustomizationSettings = {
-  version: 6;
+  version: 7;
   visualStyle: VisualStyleId;
-  theme: ThemeId;
-  systemTheme: boolean;
+  theme: PaletteId;
+  themeMode: ThemeMode;
   cardRadius: number;
   shadowIntensity: number;
   animationIntensity: number;
-  lastLightTheme: Exclude<ThemeId, "dark">;
   accentMode: "theme" | "custom";
   accent: string;
   background: BackgroundId;

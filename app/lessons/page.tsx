@@ -12,6 +12,7 @@ export default async function LessonsPage({ searchParams }: LessonsPageProps) {
       <PageHeading
         eyebrow={lessonId ? "ОДИН ШАГ ЗА РАЗ" : "ПРАКТИЧЕСКИЕ НАВЫКИ"}
         title={lessonId ? "Короткий урок" : "Каталог уроков"}
+        retroTitle={lessonId ? undefined : "Библиотека курсов"}
         description={lessonId ? "Короткое объяснение, жизненный пример, твой выбор и понятный разбор результата." : "Выбери направление и продолжай с любого доступного первого шага."}
         icon="▤"
       />
