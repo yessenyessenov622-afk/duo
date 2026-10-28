@@ -2,17 +2,21 @@ import { loadEnvConfig } from "@next/env";
 import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { getMigrations } from "better-auth/db/migration";
-import { getAuth } from "../src/server/auth";
+import { authConfiguration, createAuth } from "../src/server/auth";
 import { getPool } from "../src/server/db";
 
 loadEnvConfig(process.cwd());
 
 const pool = getPool();
+// Schema generation does not contact Google or need the production OAuth client.
+// The application still refuses Google sign-in until the real credentials exist.
+const config = authConfiguration({ ...process.env, GOOGLE_CLIENT_ID: "schema-only", GOOGLE_CLIENT_SECRET: "schema-only" });
+if (!config) throw new Error("DATABASE_URL, HTTPS BETTER_AUTH_URL and BETTER_AUTH_SECRET are required for migrations");
 const connection = await pool.connect();
 try {
   // One migration runner at a time, including Better Auth's own migrations.
   await connection.query("SELECT pg_advisory_lock(714472516)");
-  const { runMigrations } = await getMigrations(getAuth().options);
+  const { runMigrations } = await getMigrations(createAuth(config, pool).options);
   await runMigrations();
   await connection.query("BEGIN");
   await connection.query("CREATE TABLE IF NOT EXISTS kiraquest_migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())");

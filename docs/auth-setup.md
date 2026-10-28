@@ -2,7 +2,7 @@
 
 Интеграция использует Better Auth и PostgreSQL. Вход создаёт серверный аккаунт по паре `providerId=google` + `accountId` (Google `sub`). Совпадение email не объединяет аккаунты. Google проверяет личность, а отдельный PIN разблокирует KiraQuest на конкретном устройстве при действующей серверной сессии.
 
-**Рабочий вход нельзя считать подтверждённым до прохождения настоящего Google OAuth.** Для него владелец должен подготовить домен, HTTPS, базу и OAuth-клиент. Текущий адрес вида `http://18.192.104.63` не подходит для production Google OAuth. Google требует HTTPS и доменное имя; raw IP допускается только для localhost. Новых платных ресурсов эта реализация не создаёт.
+**Рабочий вход нельзя считать подтверждённым до прохождения настоящего Google OAuth.** Для сайта выбран домен `kiraquest.kz`, но он ещё не зарегистрирован. Текущий `http://18.192.104.63` не подходит для production Google OAuth: необходимы домен и HTTPS. На текущем EC2 подготовлен PostgreSQL; новых платных ресурсов при этом не создавалось.
 
 ## 1. База данных
 
@@ -40,22 +40,22 @@ npm run db:migrate
 
 ## 2. Адрес и HTTPS
 
-Выберите принадлежащий вам домен/поддомен, например `learn.example.com`. В DNS направьте A-запись на текущий публичный IP EC2. Без постоянного IP адрес A-записи необходимо обновлять после остановки и нового запуска EC2. Elastic IP или другой платный ресурс автоматически не создаются.
+Зарегистрируйте `kiraquest.kz` и в панели DNS регистратора направьте A-запись корня (`@`) на текущий публичный IP `18.192.104.63`. Домен и DNS могут оплачиваться отдельно. У сервера нет Elastic IP: после остановки и нового запуска EC2 адрес может измениться, и A-запись придётся обновить. Elastic IP автоматически не создаётся.
 
 Установите действующий TLS-сертификат для выбранного имени (например, через ACME). Настройте nginx на 443 и перенаправление 80 → HTTPS. Приложение по-прежнему слушает только `127.0.0.1:3000`. Пример **после** получения сертификата:
 
 ```nginx
 server {
     listen 80;
-    server_name learn.example.com;
-    return 301 https://learn.example.com$request_uri;
+    server_name kiraquest.kz;
+    return 301 https://kiraquest.kz$request_uri;
 }
 
 server {
     listen 443 ssl;
-    server_name learn.example.com;
-    ssl_certificate /etc/letsencrypt/live/learn.example.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/learn.example.com/privkey.pem;
+    server_name kiraquest.kz;
+    ssl_certificate /etc/letsencrypt/live/kiraquest.kz/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/kiraquest.kz/privkey.pem;
 
     # OAuth callback содержит одноразовый authorization code в query string.
     # Не записывайте его в access/error/analytics logs.
@@ -76,7 +76,7 @@ server {
 }
 ```
 
-Замените `learn.example.com` во всех местах. Удалите конфликтующий старый default server из конфигурации. Проверьте `nginx -t` перед reload. Nginx должен **перезаписывать** `X-Real-IP`, чтобы rate limit не доверял IP из клиентского заголовка. Не добавляйте logging request body: PIN передаётся в JSON тела HTTPS-запроса. Рекомендуется отключить сбор URL и тела запросов auth/PIN в APM и аналитике.
+Удалите конфликтующий старый default server из конфигурации. Проверьте `nginx -t` перед reload. Nginx должен **перезаписывать** `X-Real-IP`, чтобы rate limit не доверял IP из клиентского заголовка. Не добавляйте logging request body: PIN передаётся в JSON тела HTTPS-запроса. Рекомендуется отключить сбор URL и тела запросов auth/PIN в APM и аналитике.
 
 ## 3. Google Cloud Console
 
@@ -85,8 +85,8 @@ server {
 3. В **Audience** выберите External, если пользоваться приложением будут обычные Google-аккаунты. На стадии Testing добавьте email тестирующих пользователей. Это список доступа в Google, а не список логинов в KiraQuest.
 4. В **Data Access** оставьте только `openid`, `email`, `profile`. Не добавляйте Gmail, Drive, Contacts и offline доступ.
 5. В **Clients** выберите **Create client** → **Web application**. В старом интерфейсе тот же путь: APIs & Services → Credentials → Create Credentials → OAuth client ID.
-6. **Authorized JavaScript origins:** `https://learn.example.com`.
-7. **Authorized redirect URIs:** `https://learn.example.com/api/auth/callback/google`.
+6. **Authorized JavaScript origins:** `https://kiraquest.kz`.
+7. **Authorized redirect URIs:** `https://kiraquest.kz/api/auth/callback/google`.
 8. Для отдельного локального клиента добавьте origin `https://localhost:3000` и redirect URI `https://localhost:3000/api/auth/callback/google`. Не смешивайте локальные секреты и production-клиент без необходимости.
 9. Сохраните Client ID и Client Secret сразу после создания в серверные переменные окружения. Не сохраняйте JSON credentials в репозиторий и не отправляйте секрет в чат.
 
@@ -94,7 +94,7 @@ server {
 
 ```dotenv
 DATABASE_URL=postgresql://kiraquest:YOUR_URL_ENCODED_PASSWORD@127.0.0.1:5432/kiraquest
-BETTER_AUTH_URL=https://learn.example.com
+BETTER_AUTH_URL=https://kiraquest.kz
 BETTER_AUTH_SECRET=YOUR_RANDOM_SECRET_AT_LEAST_32_CHARACTERS
 GOOGLE_CLIENT_ID=YOUR_CLIENT_ID.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=YOUR_CLIENT_SECRET
@@ -111,7 +111,9 @@ GOOGLE_CLIENT_SECRET=YOUR_CLIENT_SECRET
 EnvironmentFile=/etc/kiraquest/kiraquest.env
 ```
 
-После изменения службы нужны `systemctl daemon-reload` и restart после успешной миграции/сборки. Существующий workflow GitHub → SSM использует внешний документ `KiraQuestDeploy`; код workflow не содержит саму команду миграции. Владелец должен добавить `npm run db:migrate` **с тем же env-файлом** в SSM-деплой перед запуском новой версии. Не запускайте `source` над недоверенными файлами. Возможный путь — отдельная systemd oneshot-служба миграции с `EnvironmentFile`, `WorkingDirectory` checkout и `ExecStart=/absolute/path/to/npm run db:migrate`. Деплой должен прекращаться при ошибке миграции.
+На текущем EC2 systemd читает закрытый файл окружения и запускает миграцию до старта приложения. Миграция использует тот же файл и прекращает запуск при ошибке; для построения схемы реальные данные Google не нужны. До настройки HTTPS и настоящих OAuth-данных вход остаётся выключен. Существующий GitHub → SSM workflow не содержит секретов.
+
+После регистрации домена и включения HTTPS владелец может открыть защищённую сессию AWS Systems Manager Session Manager на EC2 и выполнить `sudoedit /etc/kiraquest/kiraquest.env`. Добавьте строки `GOOGLE_CLIENT_ID=...` и `GOOGLE_CLIENT_SECRET=...` из Google Cloud Console непосредственно в редакторе; не вставляйте секрет в команды, GitHub или чат. Сохраните уже созданные `DATABASE_URL`, `BETTER_AUTH_SECRET` и `KIRAQUEST_PIN_PEPPER` без изменений. Не отправляйте содержимое файла. Затем выполните `sudo systemctl restart kiraquest` и проверьте `sudo systemctl is-active kiraquest`. Не включайте OAuth до работающего HTTPS.
 
 Не помещайте реальные OAuth/DB секреты в YAML workflow, GitHub Actions output или SSM command text. GitHub OIDC/роль деплоя не заменяет Google OAuth-клиент.
 
