@@ -28,11 +28,11 @@ export function normalizeSettings(input: unknown): CustomizationSettings {
     shadowIntensity: typeof value.shadowIntensity === "number" && Number.isFinite(value.shadowIntensity) ? Math.min(1.5, Math.max(0, value.shadowIntensity)) : DEFAULT_SETTINGS.shadowIntensity,
     animationIntensity: typeof value.animationIntensity === "number" && Number.isFinite(value.animationIntensity) ? Math.min(1.5, Math.max(0.5, value.animationIntensity)) : DEFAULT_SETTINGS.animationIntensity,
     mascot: (() => {
-      const id = typeof mascot.id === "string" && mascotPreviews.some((entry) => entry.id === mascot.id) ? mascot.id : "miko";
+      const id = typeof mascot.id === "string" && mascotPreviews.some((entry) => entry.id === mascot.id) ? mascot.id : DEFAULT_SETTINGS.mascot.id;
       const storedLooks = mascot.looks && typeof mascot.looks === "object" ? mascot.looks as Record<string, unknown> : {};
       const looks = Object.fromEntries(mascotPreviews.map((entry) => {
         const saved = storedLooks[entry.id] && typeof storedLooks[entry.id] === "object" ? storedLooks[entry.id] as Record<string, unknown> : null;
-        const legacyAccessory = !mascot.looks && entry.id === id ? mascot.accessory : "none";
+        const legacyAccessory = !mascot.looks && entry.id === id && mascot.id === id ? mascot.accessory : "none";
         const accessory = saved?.accessory ?? legacyAccessory;
         return [entry.id, { accessory: accessories.includes(String(accessory)) ? String(accessory) : "none", pose: saved?.pose === "curious" ? "curious" : "calm" } as MascotLook];
       })) as Record<string, MascotLook>;
@@ -69,7 +69,7 @@ export function readSettings(): { settings: CustomizationSettings; warning: stri
       const look = storedLooks[entry.id];
       return !!look && typeof look === "object" && "accessory" in look && "pose" in look;
     });
-    const needsMigration = source.version !== SETTINGS_VERSION || !hasAllMascotLooks;
+    const needsMigration = source.version !== SETTINGS_VERSION || !hasAllMascotLooks || storedMascot.id !== settings.mascot.id || Object.keys(storedLooks).some((id) => !mascotPreviews.some((entry) => entry.id === id));
     if (needsMigration && !writeSettings(settings)) {
       return { settings, warning: "Настройки перенесены для этой страницы, но браузер не сохранил новый формат. Разреши локальное хранилище, чтобы миграция сохранилась." };
     }
@@ -102,12 +102,12 @@ function hasInvalidStoredSettings(source: Record<string, unknown>): boolean {
     const mascot = source.mascot;
     if (!mascot || typeof mascot !== "object" || Array.isArray(mascot)) return true;
     const value = mascot as Record<string, unknown>;
-    if ("id" in value && (typeof value.id !== "string" || !mascotPreviews.some((entry) => entry.id === value.id))) return true;
+    if ("id" in value && typeof value.id !== "string") return true;
     if ("accessory" in value && !accessories.includes(String(value.accessory))) return true;
     if ("looks" in value) {
       if (!value.looks || typeof value.looks !== "object" || Array.isArray(value.looks)) return true;
       for (const [id, look] of Object.entries(value.looks)) {
-        if (!mascotPreviews.some((entry) => entry.id === id) || !look || typeof look !== "object" || Array.isArray(look)) return true;
+        if (!look || typeof look !== "object" || Array.isArray(look)) return true;
         const item = look as Record<string, unknown>;
         if (("accessory" in item && !accessories.includes(String(item.accessory))) || ("pose" in item && item.pose !== "calm" && item.pose !== "curious")) return true;
       }

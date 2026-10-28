@@ -90,11 +90,11 @@ test("account HTTP handlers enforce real DB sessions, PIN lock and restore acros
     assert.equal(initial.headers.get("cache-control"), "private, no-store");
     const data = await initial.json() as AccountData;
     const progress = { ...createInitialLearningProgress(), startedCourses: ["english-start"], completedLessons: ["hello-2"], xp: 25, tokens: 5 };
-    const save = await f.handlers.PUT(request("PUT", alice.cookie, { revision: data.revision, progress, settings: { ...DEFAULT_SETTINGS, themeMode: "dark", mascot: { id: "kumo" } }, userId: "bob" }, "alice"));
+    const save = await f.handlers.PUT(request("PUT", alice.cookie, { revision: data.revision, progress, settings: { ...DEFAULT_SETTINGS, themeMode: "dark", mascot: { id: "penguin" } }, userId: "bob" }, "alice"));
     assert.equal(save.status, 200, await save.clone().text());
     const saved = await save.json() as AccountData;
     assert.deepEqual(saved.progress.completedLessons, ["hello-2"]);
-    assert.equal(saved.settings.mascot.id, "kumo");
+    assert.equal(saved.settings.mascot.id, "penguin");
     const bob = await f.session("bob");
     assert.equal((await f.handlers.GET(request("GET", bob.cookie, undefined, "alice"))).status, 409);
     const bobData = await (await f.handlers.GET(request("GET", bob.cookie, undefined, "bob"))).json() as AccountData;

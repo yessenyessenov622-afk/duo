@@ -35,6 +35,7 @@ test("normalization preserves completed legacy IDs after gaps, strips unknown pr
   }));
   assert.deepEqual(normalized.completedLessons, ["hello-2", "words-2"]);
   assert.equal(normalized.nickname, "Саша");
+  assert.equal(normalized.selectedMascotId, "neo");
   assert.deepEqual(normalized.lessonSession, { lessonId: "words-1", step: 1 });
   assert.equal("accessToken" in normalized, false);
   assert.equal("userId" in normalized, false);
@@ -67,16 +68,27 @@ test("server validates shapes, bounds and explicit reset; legacy themes migrate"
   assert.throws(() => parseGuestImport({ importId: "short", progress: progress([]), settings: DEFAULT_SETTINGS, useGuestSettings: true }), AccountDataValidationError);
   const update = parseAccountUpdate({ revision: 0, settings: { version: 3, theme: "dark", mascot: { id: "kumo", accessory: "scarf" } }, injectedUserId: "bob" });
   assert.equal(update.settings?.themeMode, "dark");
-  assert.equal(update.settings?.mascot.id, "kumo");
-  assert.equal(update.settings?.mascot.looks.kumo.accessory, "scarf");
+  assert.equal(update.settings?.mascot.id, "neo");
+  assert.equal(update.settings?.mascot.looks.neo.accessory, "none");
   assert.equal("injectedUserId" in update, false);
+});
+
+test("mascot migration preserves Neo and safely replaces removed selections", () => {
+  const neo = normalizeSettings({ ...DEFAULT_SETTINGS, mascot: { id: "neo", accessory: "star", looks: { neo: { accessory: "star", pose: "curious" }, kumo: { accessory: "scarf", pose: "calm" } } } });
+  assert.equal(neo.mascot.id, "neo");
+  assert.deepEqual(neo.mascot.looks.neo, { accessory: "star", pose: "curious" });
+  assert.equal("kumo" in neo.mascot.looks, false);
+  const removed = normalizeSettings({ ...DEFAULT_SETTINGS, mascot: { id: "kumo", accessory: "scarf" } });
+  assert.equal(removed.mascot.id, "neo");
+  assert.equal(removed.mascot.accessory, "none");
+  for (const id of ["fox", "raccoon", "owl", "penguin"]) assert.equal(normalizeSettings({ ...DEFAULT_SETTINGS, mascot: { id } }).mascot.id, id);
 });
 
 test("database isolates two users, persists settings, rejects stale device revision and preserves lesson IDs", async () => {
   const { pool, repository, transaction } = await fixture();
   try {
     const first = await repository.read("alice");
-    const settings = normalizeSettings({ ...DEFAULT_SETTINGS, visualStyle: "retro-desktop", themeMode: "dark", mascot: { id: "kumo" } });
+    const settings = normalizeSettings({ ...DEFAULT_SETTINGS, visualStyle: "retro-desktop", themeMode: "dark", mascot: { id: "raccoon" } });
     const saved = await repository.update("alice", { revision: first.revision, progress: progress(["hello-2"]), settings });
     assert.equal(saved.revision, 1);
     assert.equal(saved.settings.visualStyle, "retro-desktop");

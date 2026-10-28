@@ -131,7 +131,7 @@ export function Studio() {
         <span className="preview-orbit orbit-one" aria-hidden="true">✧</span><span className="preview-orbit orbit-two" aria-hidden="true">✦</span>
         <MascotAvatar id={draft.mascot.id} accessory={draft.mascot.accessory} pose={draft.mascot.looks[draft.mascot.id]?.pose ?? "calm"} className="studio-mascot" />
       </div>
-      <div className="studio-preview-caption"><div><b>{mascotPreviews.find((item) => item.id === draft.mascot.id)?.name ?? "Мико"}</b><span>твой спутник</span></div><span className="preview-level">ТВОЁ ПРОСТРАНСТВО</span></div>
+      <div className="studio-preview-caption"><div><b>{mascotPreviews.find((item) => item.id === draft.mascot.id)?.name ?? "Нэо"}</b><span>твой спутник</span></div><span className="preview-level">ТВОЁ ПРОСТРАНСТВО</span></div>
       <div className="appearance-sample" aria-label="Образец текста, акцента и отступов"><h3>Твой следующий шаг</h3><p>Так выглядят текст, цвет и отступы с выбранными настройками.</p><span>Продолжить обучение →</span></div>
       <p className="studio-local-note">Это образец оформления. Всё приложение изменится после нажатия «Сохранить». Настройки хранятся только в этом браузере.</p>
     </section>

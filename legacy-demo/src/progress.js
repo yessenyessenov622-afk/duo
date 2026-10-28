@@ -8,7 +8,7 @@ export function createInitialProgress() {
     version: 1,
     firstRunComplete: false,
     nickname: 'Исследователь',
-    selectedMascotId: 'miko',
+    selectedMascotId: 'neo',
     selectedCourseId: 'english-start',
     startedCourses: [],
     interests: [],
@@ -44,7 +44,7 @@ export function loadProgress() {
     merged.completedLessons = merged.completedLessons.filter(id => !!findLesson(id));
     merged.startedCourses = merged.startedCourses.filter(id => courses.some(course => course.id === id));
     merged.selectedCourseId = courses.some(course => course.id === merged.selectedCourseId) ? merged.selectedCourseId : courses[0].id;
-    merged.selectedMascotId = ['miko','ren','yuki','piko','kumo','tori'].includes(merged.selectedMascotId) ? merged.selectedMascotId : 'miko';
+    merged.selectedMascotId = ['neo','fox','raccoon','owl','penguin'].includes(merged.selectedMascotId) ? merged.selectedMascotId : 'neo';
     return { progress: merged, warning: '' };
   } catch (error) {
     return { progress: createInitialProgress(), warning: `Не удалось прочитать сохранение: ${error.message} Начинаем с чистого профиля.` };

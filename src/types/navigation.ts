@@ -6,7 +6,7 @@ export type NavigationItem = {
 
 export type MascotPreview = {
   id: string;
-  species: "cat" | "fox" | "spirit" | "robot" | "dragon" | "bird" | "owl";
+  species: "cat" | "fox" | "raccoon" | "owl" | "penguin";
   name: string;
   kind: string;
   color: string;

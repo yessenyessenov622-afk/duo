@@ -8,7 +8,7 @@ export function createInitialLearningProgress(): LearningProgress {
     version: 1,
     firstRunComplete: false,
     nickname: "Исследователь",
-    selectedMascotId: "ren",
+    selectedMascotId: "neo",
     selectedCourseId: learningCourses[0]?.id ?? "",
     startedCourses: [],
     interests: [],

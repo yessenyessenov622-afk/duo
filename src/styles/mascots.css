@@ -2,51 +2,22 @@
 .mascot-avatar:has(.neo-illustration){background:transparent;box-shadow:none}
 .mascot-avatar:has(.neo-illustration)::before{display:none}
 .neo-illustration{display:block;width:100%;height:100%;object-fit:contain}
+.team-illustration{display:block;width:100%;height:100%;object-fit:contain}
+.mascot-avatar:has(.team-illustration){background:transparent;box-shadow:none}
+.mascot-avatar:has(.team-illustration)::before{display:none}
+.mascot-state-greet .team-illustration{animation:team-greet .9s ease-in-out 2}
+.mascot-state-thinking .team-illustration{transform:rotate(-5deg)}
+.mascot-state-support .team-illustration{transform:rotate(3deg)}
+.mascot-state-correct .team-illustration,.mascot-state-celebrate .team-illustration{animation:team-celebrate .6s ease-in-out 2}
+.mascot-state-rest .team-illustration{opacity:.8}
+.mascot-still .team-illustration,html[data-reduce-motion="true"] .team-illustration{animation:none!important}
+@keyframes team-greet{50%{transform:rotate(-5deg)}}
+@keyframes team-celebrate{50%{transform:translateY(-5px) rotate(3deg)}}
+@media(prefers-reduced-motion:reduce){.team-illustration{animation:none!important}}
 .neo-accessory{position:absolute;right:5%;top:8%;display:grid;place-items:center;width:26%;height:26%;border-radius:50%;background:#fff9e2;color:#467c67;font-size:clamp(12px,2vw,22px);box-shadow:0 2px 8px #254c3b30}
 .home-companion .companion-avatar{position:absolute}
 .mascot-avatar.mascot-fox{border-radius:0;background:transparent;box-shadow:none;contain:layout}
 .mascot-avatar.mascot-fox::before{display:none}
-.ren-illustration{display:block;width:100%;height:100%;overflow:visible;filter:none}
-.ren-illustration .ren-body-part{transform-box:fill-box;transform-origin:50% 100%;animation:ren-breathe 4.2s ease-in-out infinite}
-.ren-illustration .ren-head-part{transform-box:fill-box;transform-origin:50% 82%;animation:ren-head-rest 7s ease-in-out infinite}
-.ren-illustration .ren-tail-part{transform-box:fill-box;transform-origin:12% 74%;animation:ren-tail-rest 3.8s ease-in-out infinite}
-.ren-illustration .ren-ear{transform-box:fill-box;transform-origin:50% 95%;animation:ren-ear-rest 5s ease-in-out infinite}
-.ren-illustration .ren-ear-right{animation-delay:-2.2s}
-.ren-illustration .ren-eyes{transform-box:fill-box;transform-origin:50% 50%;animation:ren-blink 5.5s ease-in-out infinite}
-.mascot-fox.mascot-state-greet .ren-tail-part{animation:ren-tail-wave 1s ease-in-out 2 both}
-.mascot-fox.mascot-state-greet .ren-ear-right{animation:ren-ear-greet .8s ease-in-out 2 both}
-.mascot-fox.mascot-state-thinking .ren-head-part{animation:ren-head-think 2.4s ease-in-out infinite}
-.mascot-fox.mascot-state-correct .ren-head-part,.mascot-fox.mascot-state-celebrate .ren-head-part{animation:ren-head-yes .32s ease-in-out 4}
-.mascot-fox.mascot-state-correct .ren-tail-part,.mascot-fox.mascot-state-celebrate .ren-tail-part{animation:ren-tail-wave .9s ease-in-out 2 both}
-.mascot-fox.mascot-state-correct .ren-ear,.mascot-fox.mascot-state-celebrate .ren-ear{animation:ren-ear-greet .8s ease-in-out 2 both}
-.mascot-fox.mascot-state-support .ren-head-part{animation:ren-head-support 1.1s ease-in-out 1 both}
-.mascot-fox.mascot-state-support .ren-tail-part{animation:ren-tail-support 1.1s ease-in-out 1 both}
-.mascot-fox.mascot-state-rest .ren-illustration{animation:none}
-.mascot-fox.mascot-still .ren-illustration *{animation:none!important}
-html[data-reader-mode="true"] .mascot-fox .ren-illustration *{animation:none!important}
-html[data-reduce-motion="true"] .mascot-fox .ren-illustration *{animation:none!important}
-html[data-motion-intensity="low"] .mascot-fox .ren-illustration .ren-body-part{animation-duration:5.8s}
-html[data-motion-intensity="low"] .mascot-fox .ren-illustration .ren-head-part{animation-duration:9s}
-html[data-motion-intensity="low"] .mascot-fox .ren-illustration .ren-tail-part{animation-duration:5.5s}
-html[data-motion-intensity="low"] .mascot-fox .ren-illustration .ren-ear{animation-duration:7s}
-html[data-motion-intensity="low"] .mascot-fox .ren-illustration .ren-eyes{animation-duration:8s}
-html[data-motion-intensity="high"] .mascot-fox .ren-illustration .ren-body-part{animation-duration:3.1s}
-html[data-motion-intensity="high"] .mascot-fox .ren-illustration .ren-head-part{animation-duration:5s}
-html[data-motion-intensity="high"] .mascot-fox .ren-illustration .ren-tail-part{animation-duration:2.7s}
-html[data-motion-intensity="high"] .mascot-fox .ren-illustration .ren-ear{animation-duration:3.5s}
-html[data-motion-intensity="high"] .mascot-fox .ren-illustration .ren-eyes{animation-duration:4s}
-@media(prefers-reduced-motion:reduce){.mascot-fox .ren-illustration *{animation:none!important;transition:none!important}}
-@keyframes ren-breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.018)}}
-@keyframes ren-head-rest{0%,100%{transform:rotate(0)}48%{transform:rotate(-1.3deg)}58%{transform:rotate(.7deg)}}
-@keyframes ren-head-think{0%,100%{transform:rotate(0) translateY(0)}50%{transform:rotate(-5deg) translateY(3px)}}
-@keyframes ren-head-yes{0%,100%{transform:rotate(0) translateY(0)}50%{transform:rotate(1.8deg) translateY(-2px)}}
-@keyframes ren-head-support{0%,100%{transform:rotate(0)}50%{transform:rotate(-2.5deg)}}
-@keyframes ren-tail-rest{0%,100%{transform:rotate(0)}50%{transform:rotate(2.8deg)}}
-@keyframes ren-tail-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(8deg)}}
-@keyframes ren-tail-support{0%,100%{transform:rotate(0)}45%{transform:rotate(-2.5deg)}}
-@keyframes ren-ear-rest{0%,100%{transform:rotate(0)}50%{transform:rotate(-2deg)}}
-@keyframes ren-ear-greet{0%,100%{transform:rotate(0)}40%{transform:rotate(5deg)}70%{transform:rotate(-2deg)}}
-@keyframes ren-blink{0%,46%,50%,100%{transform:scaleY(1)}48%{transform:scaleY(.08)}}
 .mascot-avatar::before{content:none;display:none;inset:4%;pointer-events:none}
 .mascot-illustration{position:relative;z-index:1;width:100%;height:100%;overflow:visible;filter:none}
 .mascot-avatar:not(.mascot-fox) .part-body{transform-box:fill-box;transform-origin:50% 94%;animation:mascot-body-breathe 5.2s ease-in-out infinite}
@@ -95,7 +66,6 @@ html[data-motion-intensity="high"] .mascot-avatar .mascot-eyes{animation-duratio
 .mascot-select-card:hover{transform:translateY(-2px);box-shadow:var(--studio-shadow)}
 .mascot-select-card.mascot-selected{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent)}
 .mascot-gallery-avatar{width:clamp(148px,14vw,188px);height:clamp(148px,14vw,188px);align-self:center;margin:2px 0 8px}
-.mascot-gallery-avatar.mascot-fox .ren-illustration{width:88%;height:88%;align-self:center;justify-self:center}
 .mascot-gallery-copy .eyebrow{font-size:.75rem}
 .mascot-gallery-copy h2{margin:2px 0 5px;color:var(--ink);font:800 1.375rem/1.2 'Manrope',sans-serif}
 .mascot-gallery-copy p{min-height:3.1em;margin:4px 0;color:var(--muted);font-size:.875rem;line-height:1.55}
