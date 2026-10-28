@@ -11,6 +11,7 @@ import "@/src/styles/appearance.css";
 import "@/src/styles/mascots.css";
 import "@/src/styles/account.css";
 import "@/src/styles/appearance-menu.css";
+import "@/src/styles/pixel-art.css";
 import { SiteShell } from "@/src/components/SiteShell";
 
 export const metadata: Metadata = {

@@ -20,6 +20,7 @@ export function Navigation() {
   const pathname = usePathname();
   const { settings } = useCustomization();
   const retro = settings.visualStyle === "retro-desktop";
+  const pixelIcons = retro || settings.visualStyle === "pixel-art";
 
   return (
     <nav className="side-nav" aria-label="Разделы KiraQuest">
@@ -37,7 +38,7 @@ export function Navigation() {
             aria-label={label}
             aria-current={isActive ? "page" : undefined}
           >
-            <span className="nav-icon">{retro ? <RetroIcon name={item.icon} /> : <AppIcon name={item.icon} />}</span>
+            <span className="nav-icon">{pixelIcons ? <RetroIcon name={item.icon} /> : <AppIcon name={item.icon} />}</span>
             <span>{label}</span>
           </Link>
         );

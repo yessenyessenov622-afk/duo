@@ -1,0 +1,57 @@
+@font-face{font-family:KiraPixel;src:url('/press-start-2p.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap}
+.pixel-level-icon{display:none}
+
+/* Pixel Art is an independent layer: the palette and saved appearance stay intact. */
+html[data-visual-style="pixel-art"]{--pixel-edge:var(--ink);--pixel-panel:var(--surface);--pixel-shade:color-mix(in srgb,var(--accent) 16%,var(--surface));--pixel-shadow:4px 4px 0 var(--pixel-edge)}
+html[data-visual-style="pixel-art"] body{background-color:var(--paper);background-image:linear-gradient(color-mix(in srgb,var(--accent) 6%,transparent) 2px,transparent 2px),linear-gradient(90deg,color-mix(in srgb,var(--accent) 6%,transparent) 2px,transparent 2px);background-size:32px 32px}
+html[data-visual-style="pixel-art"] :is(.sidebar,.topbar,.app-footer){background:var(--pixel-panel);border-color:var(--pixel-edge)}
+html[data-visual-style="pixel-art"] .sidebar{border-right:4px solid var(--pixel-edge);box-shadow:inset -4px 0 0 var(--pixel-shade)}
+html[data-visual-style="pixel-art"] .brand-mark{border-radius:0;transform:none;box-shadow:3px 3px 0 var(--pixel-edge);font-family:KiraPixel,monospace;font-size:.8rem}
+html[data-visual-style="pixel-art"] :is(.side-label,.eyebrow,.hero-kicker,.world-category,.map-course-level>header>span){font-family:KiraPixel,monospace;font-size:.52rem;line-height:1.65;letter-spacing:0}
+html[data-visual-style="pixel-art"] :is(h1,h2,h3){font-family:KiraPixel,monospace;font-weight:400;line-height:1.55;letter-spacing:0;overflow-wrap:anywhere}
+html[data-visual-style="pixel-art"] :is(.page-heading h1,.welcome-row h1){font-size:clamp(1.1rem,2vw,1.7rem)}
+html[data-visual-style="pixel-art"] :is(.home-path-copy h2,.map-overview-copy h2){font-size:clamp(1rem,1.6vw,1.45rem)}
+html[data-visual-style="pixel-art"] :is(.button,.appearance-trigger,.appearance-reset,.node-cta,.mascot-reaction-button,.lesson-answer-option,.studio-tabs button){font-family:KiraPixel,monospace;font-size:.58rem;line-height:1.7;letter-spacing:0}
+html[data-visual-style="pixel-art"] :is(.button,.appearance-trigger,.appearance-reset,.lesson-answer-option,.mascot-reaction-button,.appearance-choices>button){border:3px solid var(--pixel-edge);border-radius:0;box-shadow:3px 3px 0 var(--pixel-edge);transition:transform .1s steps(2,end),box-shadow .1s steps(2,end)}
+html[data-visual-style="pixel-art"] :is(.button,.appearance-trigger,.appearance-reset,.lesson-answer-option,.mascot-reaction-button):hover:not(:disabled){transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--pixel-edge)}
+html[data-visual-style="pixel-art"] :is(.button,.appearance-trigger,.appearance-reset,.lesson-answer-option,.mascot-reaction-button):active:not(:disabled){transform:translate(3px,3px);box-shadow:0 0 0 var(--pixel-edge)}
+html[data-visual-style="pixel-art"] .button-dark{background:var(--accent);color:var(--on-accent)}
+html[data-visual-style="pixel-art"] :is(.home-hero,.home-next-card,.home-companion,.home-quick-warmup,.stage-link,.map-overview,.map-course-world,.map-stat,.map-reward-card,.lesson-question-card,.lesson-detail-dialog,.lesson-result-card,.mascot-select-card,.mascot-gallery-intro,.studio-preview-panel,.studio-controls,.profile-banner,.profile-block,.course-catalog-card,.appearance-popover,.focus-interval-panel){border:3px solid var(--pixel-edge);border-radius:0;background-color:var(--pixel-panel);background-image:none;box-shadow:var(--pixel-shadow)}
+html[data-visual-style="pixel-art"] :is(.home-hero,.map-overview,.map-course-world,.lesson-question-card,.lesson-result-card,.lesson-detail-dialog,.profile-banner){position:relative}
+html[data-visual-style="pixel-art"] :is(.home-hero,.map-overview,.lesson-question-card,.lesson-result-card)::before{content:"◆  ✦  ◆";display:block;grid-column:1/-1;width:max-content;max-width:100%;padding:5px 9px;margin-bottom:8px;background:var(--accent);color:var(--on-accent);font:400 .5rem/1.4 KiraPixel,monospace;letter-spacing:.2em}
+html[data-visual-style="pixel-art"] .home-hero{background:linear-gradient(90deg,var(--pixel-panel) 0 67%,var(--pixel-shade) 67%);gap:12px}
+html[data-visual-style="pixel-art"][data-theme] .home-learning-path.home-hero{padding:22px;border:3px solid var(--pixel-edge);background:var(--pixel-panel);box-shadow:var(--pixel-shadow)}
+html[data-visual-style="pixel-art"] .home-path-copy h2,html[data-visual-style="pixel-art"] .map-course-level>header h3{font-family:KiraPixel,monospace;font-weight:400;line-height:1.6}
+html[data-visual-style="pixel-art"] .home-path-copy .button::before{content:"▶";font-size:.65rem}
+html[data-visual-style="pixel-art"] .side-nav{gap:8px}
+html[data-visual-style="pixel-art"] .nav-item{position:relative;min-height:46px;border:2px solid transparent;border-radius:0;box-shadow:none;color:var(--muted);font-family:KiraPixel,monospace;font-size:.6rem;line-height:1.55}
+html[data-visual-style="pixel-art"] .nav-item.active{border-color:var(--pixel-edge);background:var(--accent);color:var(--on-accent);box-shadow:3px 3px 0 var(--pixel-edge)}
+html[data-visual-style="pixel-art"] .nav-item.active::after{content:"▶";margin-left:auto;font-size:.65rem}
+html[data-visual-style="pixel-art"] .nav-item:hover{transform:translateX(2px)}
+html[data-visual-style="pixel-art"] .nav-icon svg{shape-rendering:crispEdges;image-rendering:pixelated}
+html[data-visual-style="pixel-art"] :is(.map-meter,.home-path-progress>span,.world-completion>i,.course-catalog-progress,.chapter-progress){height:12px;border:2px solid var(--pixel-edge);border-radius:0;background:var(--pixel-panel);overflow:hidden}
+html[data-visual-style="pixel-art"] :is(.map-meter i,.home-path-progress i,.world-completion i b,.course-catalog-progress i,.chapter-progress i){border-radius:0;background:repeating-linear-gradient(90deg,var(--accent) 0 9px,var(--pixel-panel) 9px 12px)}
+html[data-visual-style="pixel-art"] :is(.map-stat,.lesson-result-facts span,.profile-stat){border-radius:0;background:var(--pixel-shade);box-shadow:inset 0 -3px 0 var(--pixel-edge)}
+html[data-visual-style="pixel-art"] :is(.map-stat b,.world-completion>span,.lesson-result-facts b){font-family:KiraPixel,monospace;font-size:.85rem;line-height:1.7}
+html[data-visual-style="pixel-art"] .map-world-heading{background:var(--pixel-shade);border-bottom:3px solid var(--pixel-edge)}
+html[data-visual-style="pixel-art"] .world-course-icon{border:2px solid var(--pixel-edge);border-radius:0;box-shadow:2px 2px 0 var(--pixel-edge)}
+html[data-visual-style="pixel-art"] .map-course-level>header{padding:8px;border-bottom:2px dashed var(--line)}
+html[data-visual-style="pixel-art"] .map-course-level .journey-path::before{height:4px;border-radius:0;background:repeating-linear-gradient(90deg,var(--accent) 0 10px,transparent 10px 15px)}
+html[data-visual-style="pixel-art"] .map-course-level .journey-chapter{border:0}
+html[data-visual-style="pixel-art"] .topic-node .node-orbit{width:76px;height:76px;padding:5px;border:3px solid var(--pixel-edge);border-radius:0;background:var(--pixel-shade);box-shadow:4px 4px 0 var(--pixel-edge);filter:none;animation:none;transition:transform .12s steps(2,end)}
+html[data-visual-style="pixel-art"] .topic-node .node-symbol{display:none}
+html[data-visual-style="pixel-art"] .topic-node .pixel-level-icon{display:block;width:100%;height:100%;padding:9px;background:var(--surface);color:var(--accent)}
+html[data-visual-style="pixel-art"] .topic-node.node-next .pixel-level-icon{background:var(--accent);color:var(--on-accent)}
+html[data-visual-style="pixel-art"] .topic-node.node-completed .pixel-level-icon{background:var(--state-success-bg);color:var(--state-success-ink)}
+html[data-visual-style="pixel-art"] .topic-node.node-locked .pixel-level-icon{background:var(--state-neutral-bg);color:var(--muted)}
+html[data-visual-style="pixel-art"] .topic-node .node-copy>b{font:400 .65rem/1.65 KiraPixel,monospace;white-space:normal;overflow:visible}
+html[data-visual-style="pixel-art"] .topic-node .node-cta{margin:0;border:2px solid var(--pixel-edge);border-radius:0;background:var(--accent);color:var(--on-accent);font-size:.5rem}
+html[data-visual-style="pixel-art"] .topic-node:hover .node-orbit{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--pixel-edge)}
+html[data-visual-style="pixel-art"] .topic-node:active .node-orbit{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--pixel-edge)}
+html[data-visual-style="pixel-art"] :is(.lesson-dialog-mark,.lesson-result-seal,.lesson-progress-orb,.lesson-option-letter,.avatar-button,.focus-interval-trigger,.theme-choice,.studio-setting select){border-radius:0}
+html[data-visual-style="pixel-art"] .topic-lesson-list li{border:2px solid var(--pixel-edge);border-radius:0;background:var(--pixel-panel);box-shadow:3px 3px 0 var(--pixel-edge)}
+html[data-visual-style="pixel-art"] .topic-lesson-list li::before{content:"▸";align-self:center;color:var(--accent);font:400 .8rem KiraPixel,monospace}
+html[data-visual-style="pixel-art"] :is(.lesson-result-seal.earned,.node-completed .node-orbit){animation:pixel-reward .55s steps(3,end) 1}
+@keyframes pixel-reward{0%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.08)}100%{transform:translateY(0) scale(1)}}
+@media(max-width:700px){html[data-visual-style="pixel-art"] .sidebar{border:0;border-top:3px solid var(--pixel-edge);box-shadow:none}html[data-visual-style="pixel-art"] .side-nav{gap:2px}html[data-visual-style="pixel-art"] .nav-item{min-height:54px;padding:4px 1px;font-size:.42rem}html[data-visual-style="pixel-art"] .nav-item.active::after{display:none}html[data-visual-style="pixel-art"] .map-course-level .journey-chapter:not(:last-child)::after{width:4px;background:repeating-linear-gradient(0deg,var(--accent) 0 5px,transparent 5px 8px)}html[data-visual-style="pixel-art"] .topic-node .node-orbit{width:68px;height:68px}html[data-visual-style="pixel-art"] .home-hero{background:var(--pixel-panel)}html[data-visual-style="pixel-art"] .appearance-trigger{font-size:.7rem}}
+@media(prefers-reduced-motion:reduce){html[data-visual-style="pixel-art"] :is(.topic-node .node-orbit,.lesson-result-seal.earned,.button,.appearance-trigger){animation:none!important;transition:none!important}}

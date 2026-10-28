@@ -23,7 +23,7 @@ function CourseChapter({ course, chapter, completedIds, startedIds, onSelect }: 
   return <section className="journey-chapter" aria-label={`Тема ${chapter.title}`}>
     <div className="journey-path" aria-label={`Тема «${chapter.title}»`}>
       <button type="button" className={`journey-node topic-node node-${status}`} style={{ "--topic-progress": `${Math.round((completeCount / total) * 100)}%` } as React.CSSProperties} onClick={() => onSelect(course, chapter, status)} aria-label={`${chapter.title}. ${statusLabel}. Пройдено ${completeCount} из ${total} уроков.`}>
-        <span className="node-orbit"><span className="node-symbol" aria-hidden="true">{status === "completed" ? "✓" : chapter.icon}</span></span>
+        <span className="node-orbit"><span className="node-symbol" aria-hidden="true">{status === "completed" ? "✓" : chapter.icon}</span><svg className="pixel-level-icon" viewBox="0 0 16 16" shapeRendering="crispEdges" aria-hidden="true"><path d={status === "locked" ? "M4 6V3h2V1h4v2h2v3h2v9H2V6h2zm2 0h4V3H6v3zm1 3v3h2V9H7z" : status === "completed" ? "M1 7h3v2h2v2h1V9h2V7h2V5h2V3h2v4h-2v2h-2v2H9v2H5v-2H3V9H1z" : "M7 1h2v3h3v2h3v4h-3v2H9v3H7v-3H4v-2H1V6h3V4h3z"} fill="currentColor" fillRule="evenodd" /></svg></span>
         <span className="node-copy"><b>{chapter.title}</b><small>{completeCount} из {total} уроков · {statusLabel}</small></span>
         {status === "next" && <span className="node-cta">Продолжить</span>}
         {status === "available" && <span className="node-cta">Начать</span>}
