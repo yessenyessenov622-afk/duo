@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, type ChangeEvent } from "react";
 import { mascotPreviews } from "@/src/data/mascots";
@@ -7,6 +7,7 @@ import { appearanceRuntime, DEFAULT_SETTINGS, normalizeSettings } from "@/src/li
 import { useCustomization } from "@/src/components/CustomizationProvider";
 import { MascotAvatar } from "@/src/components/MascotAvatar";
 import { saveWallpaper } from "@/src/lib/wallpaper-storage";
+import { accountRequest, useAccount } from "@/src/components/AccountProvider";
 import type { BackgroundId, CustomizationSettings, PaletteId, ThemeMode, VisualStyleId } from "@/src/types/customization";
 
 const themeOptions: { id: PaletteId; label: string; icon: string }[] = [
@@ -24,15 +25,14 @@ const backgrounds: { id: BackgroundId; label: string }[] = [
 const accents = ["#8064d8", "#cf8d42", "#4d9c8a", "#d36f91", "#4689b5", "#748a5d", "#44414c"];
 const accessoryOptions = [{ id: "none", label: "Без аксессуара", icon: "·" }, { id: "star", label: "Звёздная заколка", icon: "✦" }, { id: "glasses", label: "Очки исследователя", icon: "◉" }, { id: "scarf", label: "Мягкий шарф", icon: "〰" }, { id: "halo", label: "Светящийся ореол", icon: "✧" }];
 type Category = "appearance" | "companion" | "preferences";
-const FAVORITES_KEY = "kiraquest.appearance-favorites.v1";
-type FavoriteLook = { name: string; settings: CustomizationSettings };
 
 export function Studio() {
+  const account = useAccount();
   const { settings: saved, ready, save, reset, warning } = useCustomization();
   const [draft, setDraft] = useState<CustomizationSettings>(saved);
   const [category, setCategory] = useState<Category>("appearance");
   const [notice, setNotice] = useState("");
-  const [favorites, setFavorites] = useState<FavoriteLook[]>([]);
+  const favorites = account.data.preferences.favoriteLooks;
   const [wallpaperFile, setWallpaperFile] = useState<File | null>(null);
   const [wallpaperPreview, setWallpaperPreview] = useState("");
   const [saving, setSaving] = useState(false);
@@ -46,12 +46,6 @@ export function Studio() {
     update();
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
-  }, []);
-  useEffect(() => {
-    try {
-      const stored = JSON.parse(window.localStorage.getItem(FAVORITES_KEY) ?? "[]");
-      if (Array.isArray(stored)) setFavorites(stored.filter((item): item is FavoriteLook => Boolean(item && typeof item.name === "string" && item.settings)).slice(0, 5).map((item) => ({ ...item, settings: normalizeSettings(item.settings) })));
-    } catch { setFavorites([]); }
   }, []);
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
   const update = (changes: Partial<CustomizationSettings>) => { setNotice(""); setDraft((current) => ({ ...current, ...changes })); };
@@ -72,9 +66,12 @@ export function Studio() {
   const saveDraft = async () => {
     setSaving(true);
     try {
-      if (wallpaperFile) await saveWallpaper(draft.customWallpaperId, wallpaperFile);
+      if (wallpaperFile) {
+        if (account.user) await accountRequest("/api/account/wallpaper", { method: "PUT", body: wallpaperFile, headers: { "Content-Type": wallpaperFile.type } }, account.user.id);
+        else await saveWallpaper(draft.customWallpaperId, wallpaperFile);
+      }
       const ok = save(draft);
-      setNotice(ok ? "Настройки сохранены в этом браузере." : "Браузер не разрешил сохранить настройки. Проверь доступ к локальному хранилищу.");
+      setNotice(ok ? account.user ? "Изменения приняты. Статус сохранения на сервере указан над студией." : "Настройки сохранены в этом браузере." : "Не удалось принять изменения. Проверь сообщение о состоянии сохранения.");
       if (ok) { setWallpaperFile(null); setWallpaperPreview(""); }
     } catch {
       setNotice("Не удалось сохранить изображение в хранилище. Прежний фон сохранён.");
@@ -84,8 +81,8 @@ export function Studio() {
     const file = event.target.files?.[0];
     event.currentTarget.value = "";
     if (!file) return;
-    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 4 * 1024 * 1024) {
-      setNotice("Выбери PNG, JPEG или WebP размером до 4 МБ. Текущий фон оставлен.");
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 2 * 1024 * 1024) {
+      setNotice("Выбери PNG, JPEG или WebP размером до 2 МБ. Текущий фон оставлен.");
       return;
     }
     try {
@@ -107,13 +104,11 @@ export function Studio() {
     const now = new Date();
     const name = `Оформление ${now.toLocaleDateString("ru-RU")} ${now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`;
     const next = [{ name, settings: normalizeSettings(draft) }, ...favorites].slice(0, 5);
-    try { window.localStorage.setItem(FAVORITES_KEY, JSON.stringify(next)); setFavorites(next); setNotice("Оформление сохранено в избранном."); }
-    catch { setNotice("Не удалось сохранить избранное в этом браузере."); }
+    setNotice(account.update({ preferences: { ...account.data.preferences, favoriteLooks: next } }) ? "Оформление добавлено в избранное." : "Не удалось сохранить избранное.");
   };
   const removeFavorite = (name: string) => {
     const next = favorites.filter((favorite) => favorite.name !== name);
-    try { window.localStorage.setItem(FAVORITES_KEY, JSON.stringify(next)); setFavorites(next); }
-    catch { setNotice("Не удалось изменить избранное."); }
+    if (!account.update({ preferences: { ...account.data.preferences, favoriteLooks: next } })) setNotice("Не удалось изменить избранное.");
   };
   const appearanceTokens = appearanceStyle(draft);
   const previewStyle = {
@@ -154,7 +149,7 @@ export function Studio() {
           <div className="studio-group"><div className="studio-group-title"><h2>Тема интерфейса</h2><small>Независимо от палитры и акцента</small></div><div className="theme-mode-options" role="group" aria-label="Тема интерфейса">{([{ id: "light", label: "Светлая" }, { id: "dark", label: "Тёмная" }, { id: "system", label: "Системная" }] as { id: ThemeMode; label: string }[]).map((mode) => <button type="button" key={mode.id} aria-pressed={draft.themeMode === mode.id} className={draft.themeMode === mode.id ? "chosen" : ""} onClick={() => update({ themeMode: mode.id })}>{mode.label}</button>)}</div><p className="studio-hint">Системная тема следует настройке устройства. Палитра ниже остаётся выбранной и возвращается в светлом режиме.</p></div>
           <div className="studio-group"><div className="studio-group-title"><h2>Цветовая палитра</h2><small>Акцент можно выбрать отдельно</small></div><div className="theme-grid">{themeOptions.map((theme) => <button key={theme.id} className={`theme-choice theme-${theme.id}${draft.theme === theme.id ? " chosen" : ""}`} aria-pressed={draft.theme === theme.id} onClick={() => update({ theme: theme.id })}><span>{theme.icon}</span><b>{theme.label}</b></button>)}</div><div className="favorite-look-tools"><button type="button" className="button button-soft" disabled={Boolean(wallpaperFile)} onClick={addFavorite}>Сохранить оформление в избранное</button>{favorites.length > 0 && <ul aria-label="Избранные оформления">{favorites.map((favorite) => <li key={favorite.name}><button type="button" onClick={() => { setDraft(favorite.settings); setNotice(`Применён набор «${favorite.name}». Нажми «Сохранить», чтобы использовать его во всём приложении.`); }}>{favorite.name}</button><button type="button" aria-label={`Удалить ${favorite.name} из избранного`} onClick={() => removeFavorite(favorite.name)}>×</button></li>)}</ul>}</div></div>
           <div className="studio-group"><div className="studio-group-title"><h2>Цветовой акцент</h2><small>Цвет темы или собственный</small></div><div className="accent-mode" aria-label="Источник акцента"><button type="button" aria-pressed={draft.accentMode === "theme"} onClick={() => update({ accentMode: "theme" })}>Цвет темы</button><button type="button" aria-pressed={draft.accentMode === "custom"} onClick={() => update({ accentMode: "custom" })}>Свой цвет</button></div><div className="accent-palette" aria-label="Цвета акцента">{accents.map((color) => <button type="button" key={color} aria-label={`Акцент ${color}`} aria-pressed={draft.accentMode === "custom" && draft.accent === color} className={draft.accentMode === "custom" && draft.accent === color ? "chosen" : ""} style={{ "--swatch": color } as React.CSSProperties} onClick={() => update({ accent: color, accentMode: "custom" })} />)}<label className="custom-color-control"><span>{"Свой цвет"}</span><input type="color" aria-label="Свой цвет акцента" value={draft.accentMode === "theme" ? PALETTES[draft.theme].accent : draft.accent} onChange={(event) => update({ accent: event.target.value, accentMode: "custom" })} /></label></div><p className="studio-hint">Свой цвет сохраняется при смене темы. Для читаемости текста его оттенок автоматически корректируется. «Цвет темы» возвращает встроенную палитру.</p></div>
-          <div className="studio-group"><div className="studio-group-title"><h2>Фон пространства</h2><small>Ненавязчивый декор</small></div><div className="background-grid">{backgrounds.map((item) => <button className={draft.background === item.id ? "chosen" : ""} key={item.id} aria-pressed={draft.background === item.id} onClick={() => { update({ background: item.id }); if (item.id !== "image") { setWallpaperFile(null); setWallpaperPreview(""); } }}><span className={`background-swatch background-${item.id}`} style={item.id === "custom" ? { background: draft.customBackground } : undefined} aria-hidden="true" />{item.label}</button>)}</div><label className="custom-color-control custom-wallpaper-control"><span>{"Цвет фона"}</span><input type="color" aria-label="Цвет фона" value={draft.customBackground} onChange={(event) => { update({ customBackground: event.target.value, background: "custom" }); setWallpaperFile(null); setWallpaperPreview(""); }} /></label><label className="custom-color-control image-wallpaper-control"><span>Своё изображение (до 4 МБ)</span><input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Загрузить фоновое изображение" onChange={chooseWallpaper} /></label>{draft.background === "image" && <div className="wallpaper-tuning"><label className="studio-setting"><span><b>Размытие фона</b><small>{draft.wallpaperBlur} px</small></span><input className="font-scale-control" type="range" min="0" max="12" step="1" value={draft.wallpaperBlur} aria-label="Размытие фонового изображения" onChange={(event) => update({ wallpaperBlur: Number(event.target.value) })} /></label><label className="studio-setting"><span><b>Затемнение фона</b><small>{Math.round(draft.wallpaperDim * 100)}%</small></span><input className="font-scale-control" type="range" min="0" max="0.45" step="0.05" value={draft.wallpaperDim} aria-label="Затемнение фонового изображения" onChange={(event) => update({ wallpaperDim: Number(event.target.value) })} /></label><label className="studio-setting"><span><b>Масштаб изображения</b><small>{Math.round(draft.wallpaperScale * 100)}%</small></span><input className="font-scale-control" type="range" min="0.8" max="1.6" step="0.05" value={draft.wallpaperScale} aria-label="Масштаб изображения" onChange={(event) => update({ wallpaperScale: Number(event.target.value) })} /></label><label className="studio-setting"><span><b>Положение по горизонтали</b><small>{draft.wallpaperX}%</small></span><input className="font-scale-control" type="range" min="0" max="100" step="5" value={draft.wallpaperX} aria-label="Положение изображения по горизонтали" onChange={(event) => update({ wallpaperX: Number(event.target.value) })} /></label><label className="studio-setting"><span><b>Положение по вертикали</b><small>{draft.wallpaperY}%</small></span><input className="font-scale-control" type="range" min="0" max="100" step="5" value={draft.wallpaperY} aria-label="Положение изображения по вертикали" onChange={(event) => update({ wallpaperY: Number(event.target.value) })} /></label></div>}<p className="studio-hint">Файл проверяется по типу, размеру и разрешению и хранится в IndexedDB этого браузера, не в localStorage. Учебные карточки остаются непрозрачными, чтобы фон не снижал читаемость.</p></div>
+          <div className="studio-group"><div className="studio-group-title"><h2>Фон пространства</h2><small>Ненавязчивый декор</small></div><div className="background-grid">{backgrounds.map((item) => <button className={draft.background === item.id ? "chosen" : ""} key={item.id} aria-pressed={draft.background === item.id} onClick={() => { update({ background: item.id }); if (item.id !== "image") { setWallpaperFile(null); setWallpaperPreview(""); } }}><span className={`background-swatch background-${item.id}`} style={item.id === "custom" ? { background: draft.customBackground } : undefined} aria-hidden="true" />{item.label}</button>)}</div><label className="custom-color-control custom-wallpaper-control"><span>{"Цвет фона"}</span><input type="color" aria-label="Цвет фона" value={draft.customBackground} onChange={(event) => { update({ customBackground: event.target.value, background: "custom" }); setWallpaperFile(null); setWallpaperPreview(""); }} /></label><label className="custom-color-control image-wallpaper-control"><span>Своё изображение (до 2 МБ)</span><input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Загрузить фоновое изображение" onChange={chooseWallpaper} /></label>{draft.background === "image" && <div className="wallpaper-tuning"><label className="studio-setting"><span><b>Размытие фона</b><small>{draft.wallpaperBlur} px</small></span><input className="font-scale-control" type="range" min="0" max="12" step="1" value={draft.wallpaperBlur} aria-label="Размытие фонового изображения" onChange={(event) => update({ wallpaperBlur: Number(event.target.value) })} /></label><label className="studio-setting"><span><b>Затемнение фона</b><small>{Math.round(draft.wallpaperDim * 100)}%</small></span><input className="font-scale-control" type="range" min="0" max="0.45" step="0.05" value={draft.wallpaperDim} aria-label="Затемнение фонового изображения" onChange={(event) => update({ wallpaperDim: Number(event.target.value) })} /></label><label className="studio-setting"><span><b>Масштаб изображения</b><small>{Math.round(draft.wallpaperScale * 100)}%</small></span><input className="font-scale-control" type="range" min="0.8" max="1.6" step="0.05" value={draft.wallpaperScale} aria-label="Масштаб изображения" onChange={(event) => update({ wallpaperScale: Number(event.target.value) })} /></label><label className="studio-setting"><span><b>Положение по горизонтали</b><small>{draft.wallpaperX}%</small></span><input className="font-scale-control" type="range" min="0" max="100" step="5" value={draft.wallpaperX} aria-label="Положение изображения по горизонтали" onChange={(event) => update({ wallpaperX: Number(event.target.value) })} /></label><label className="studio-setting"><span><b>Положение по вертикали</b><small>{draft.wallpaperY}%</small></span><input className="font-scale-control" type="range" min="0" max="100" step="5" value={draft.wallpaperY} aria-label="Положение изображения по вертикали" onChange={(event) => update({ wallpaperY: Number(event.target.value) })} /></label></div>}<p className="studio-hint">Файл проверяется по типу, размеру и разрешению. Гостевой фон хранится в этом браузере; в аккаунте изображение сохраняется на сервере. Учебные карточки остаются непрозрачными, чтобы фон не снижал читаемость.</p></div>
         </>}
         {category === "companion" && <>
           <div className="studio-group"><div className="studio-group-title"><h2>Выбери спутника</h2><small>Выбор сохраняется локально</small></div><div className="studio-mascot-list">{mascotPreviews.map((mascot) => <button key={mascot.id} className={draft.mascot.id === mascot.id ? "chosen" : ""} aria-pressed={draft.mascot.id === mascot.id} onClick={() => updateMascot({ id: mascot.id })}><MascotAvatar id={mascot.id} accessory={draft.mascot.looks?.[mascot.id]?.accessory ?? (draft.mascot.id === mascot.id ? draft.mascot.accessory : "none")} className="mini-mascot" state="greet"/><span><b>{mascot.name}</b><small>{mascot.description}</small></span><span className="choice-check">{draft.mascot.id === mascot.id ? "✓" : "＋"}</span></button>)}</div><div className="mascot-pose-options" aria-label="Поза спутника"><button type="button" aria-pressed={(draft.mascot.looks[draft.mascot.id]?.pose ?? "calm") === "calm"} onClick={() => updateMascotPose("calm")}>Спокойная поза</button><button type="button" aria-pressed={draft.mascot.looks[draft.mascot.id]?.pose === "curious"} onClick={() => updateMascotPose("curious")}>Любопытная поза</button></div></div>
@@ -178,3 +173,4 @@ export function Studio() {
     </section>
   </div>;
 }
+

@@ -3,6 +3,7 @@ import { PageHeading } from "@/src/components/PageHeading";
 import { HomeCompanion } from "@/src/components/HomeCompanion";
 import { QuickWarmup } from "@/src/components/QuickWarmup";
 import { HomeLearningPath } from "@/src/components/HomeLearningPath";
+import { AccountStorageNote } from "@/src/components/AccountBoundary";
 
 export default function HomePage() {
   return (
@@ -69,7 +70,7 @@ export default function HomePage() {
         </Link>
       </section>
 
-      <p className="stage-disclosure">Настройки оформления сохраняются локально в этом браузере. Аккаунт и синхронизация учебного прогресса не подключены.</p>
+      <AccountStorageNote />
     </>
   );
 }

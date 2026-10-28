@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useAccount } from "@/src/components/AccountProvider";
 
 type Phase = "focus" | "break";
 type TimerState = { phase: Phase; secondsLeft: number; running: boolean; endsAt: number | null };
@@ -10,16 +11,19 @@ const duration = (phase: Phase) => phase === "focus" ? 25 * 60 : 5 * 60;
 const initialState: TimerState = { phase: "focus", secondsLeft: duration("focus"), running: false, endsAt: null };
 
 export function FocusInterval() {
+  const account = useAccount();
   const pathname = usePathname();
   const [state, setState] = useState<TimerState>(initialState);
   const [expanded, setExpanded] = useState(false);
-  const [distractionFree, setDistractionFree] = useState(false);
+  const distractionFree = account.data.preferences.distractionFree;
+  const setDistractionFree = (value: boolean) => account.update({ preferences: { ...account.data.preferences, distractionFree: value } });
   const [announcement, setAnnouncement] = useState("");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     try {
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null") as { timer?: TimerState; distractionFree?: boolean } | null;
+      const stored = account.user ? null : JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null") as { timer?: TimerState; distractionFree?: boolean } | null;
+      setState(initialState);
       if (stored?.timer && (stored.timer.phase === "focus" || stored.timer.phase === "break")
         && typeof stored.timer.running === "boolean"
         && Number.isFinite(stored.timer.secondsLeft)
@@ -31,16 +35,16 @@ export function FocusInterval() {
           setAnnouncement(timer.phase === "focus" ? "Интервал учёбы завершён. Можно начать отдых." : "Перерыв завершён. Можно начать новый интервал.");
         } else setState({ ...timer, secondsLeft, endsAt: timer.running ? Date.now() + secondsLeft * 1000 : null });
       }
-      setDistractionFree(Boolean(stored?.distractionFree));
     } catch { /* A broken timer preference should not affect the rest of the app. */ }
     setReady(true);
-  }, []);
+  }, [account.user?.id]);
 
   useEffect(() => {
     if (!ready) return;
+    if (account.user) return;
     if (state.running && state.secondsLeft % 5 !== 0) return;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ timer: state, distractionFree })); } catch { /* Timer remains usable for this visit. */ }
-  }, [state, distractionFree, ready]);
+  }, [state, distractionFree, ready, account.user]);
 
   useEffect(() => {
     document.documentElement.dataset.focusMode = String(distractionFree);
@@ -71,7 +75,7 @@ export function FocusInterval() {
   const resetTimer = () => { setState({ ...initialState, phase: state.phase, secondsLeft: duration(state.phase) }); setAnnouncement("Интервал сброшен."); };
 
   return <div className="focus-interval">
-    <button type="button" className="focus-interval-trigger" aria-expanded={expanded} aria-controls="focus-interval-panel" onClick={() => setExpanded((value) => !value)}>
+    <button type="button" className="focus-interval-trigger" disabled={!account.ready} aria-expanded={expanded} aria-controls="focus-interval-panel" onClick={() => setExpanded((value) => !value)}>
       <span aria-hidden="true">◷</span><span>Фокус</span>
     </button>
     {expanded && <section id="focus-interval-panel" className="focus-interval-panel" aria-label="Интервал фокуса">

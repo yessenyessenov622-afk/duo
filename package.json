@@ -11,17 +11,26 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "node --conditions=react-server --import tsx scripts/migrate-auth.ts",
+    "test:auth": "node --conditions=react-server --import tsx --test tests/*.test.ts"
   },
   "dependencies": {
+    "better-auth": "^1.7.14",
     "next": "16.4.3",
+    "pg": "^8.23.1",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "pg-mem": "^3.0.14",
+    "tsx": "^4.23.15",
     "typescript": "5.9.3"
   }
 }

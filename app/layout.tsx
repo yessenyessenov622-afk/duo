@@ -9,6 +9,7 @@ import "@/src/styles/customization.css";
 import "@/src/styles/learning-map.css";
 import "@/src/styles/appearance.css";
 import "@/src/styles/mascots.css";
+import "@/src/styles/account.css";
 import { SiteShell } from "@/src/components/SiteShell";
 
 export const metadata: Metadata = {

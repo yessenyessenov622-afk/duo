@@ -5,6 +5,8 @@ import { Navigation } from "@/src/components/Navigation";
 import { SiteHeader } from "@/src/components/SiteHeader";
 import { CustomizationProvider } from "@/src/components/CustomizationProvider";
 import { LearningProgressProvider } from "@/src/components/LearningProgressProvider";
+import { AccountProvider } from "@/src/components/AccountProvider";
+import { AccountBoundary, AccountStatus } from "@/src/components/AccountBoundary";
 
 type SiteShellProps = {
   children: ReactNode;
@@ -12,7 +14,7 @@ type SiteShellProps = {
 
 export function SiteShell({ children }: SiteShellProps) {
   return (
-    <CustomizationProvider>
+    <AccountProvider><CustomizationProvider>
     <LearningProgressProvider>
     <div className="app-shell">
       <aside className="sidebar" aria-label="Главная навигация">
@@ -31,14 +33,14 @@ export function SiteShell({ children }: SiteShellProps) {
           </div>
           <div className="local-badge">
             <span className="status-dot" aria-hidden="true" />
-            <span>Демо: оформление сохраняется в этом браузере. Прогресс с аккаунтом не синхронизируется.</span>
+            <AccountStatus />
           </div>
         </div>
       </aside>
       <div className="main-area">
         <SiteHeader />
         <main className="view-root" id="main-content" tabIndex={-1}>
-          {children}
+          <AccountBoundary>{children}</AccountBoundary>
         </main>
         <footer className="app-footer">
           <span>{APP_NAME}</span>
@@ -47,6 +49,6 @@ export function SiteShell({ children }: SiteShellProps) {
       </div>
     </div>
     </LearningProgressProvider>
-    </CustomizationProvider>
+    </CustomizationProvider></AccountProvider>
   );
 }

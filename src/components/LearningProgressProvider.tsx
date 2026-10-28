@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { ALL_COURSES_ID, completeLearningLesson, findLearningLesson, learningCourses } from "@/src/data/learning-map";
-import { createInitialLearningProgress, readLearningProgress, statusForLesson, writeLearningProgress } from "@/src/lib/learning-progress";
+import { createInitialLearningProgress, statusForLesson } from "@/src/lib/learning-progress";
+import { useAccount } from "@/src/components/AccountProvider";
 import type { LearningProgress } from "@/src/types/learning";
 
 type ProgressContextValue = {
@@ -18,24 +19,18 @@ type ProgressContextValue = {
 const ProgressContext = createContext<ProgressContextValue | null>(null);
 
 export function LearningProgressProvider({ children }: { children: ReactNode }) {
-  const [progress, setProgress] = useState(createInitialLearningProgress);
-  const [ready, setReady] = useState(false);
+  const account = useAccount();
+  const progress = account.data.progress;
+  const ready = account.ready;
   const [warning, setWarning] = useState("");
-  useEffect(() => {
-    const result = readLearningProgress();
-    setProgress(result.progress);
-    setWarning(result.warning);
-    setReady(true);
-  }, []);
   const commit = useCallback((next: LearningProgress) => {
-    if (!writeLearningProgress(next)) {
-      setWarning("Браузер не разрешил сохранить прогресс. Проверь настройки хранилища этого сайта.");
+    if (!account.update({ progress: next })) {
+      setWarning("Не удалось принять изменения прогресса. Проверь состояние аккаунта и повтори попытку.");
       return false;
     }
-    setProgress(next);
     setWarning("");
     return true;
-  }, []);
+  }, [account.update]);
   const selectCourse = useCallback((id: string) => {
     if (id !== ALL_COURSES_ID && !learningCourses.some((course) => course.id === id)) return false;
     return commit({ ...progress, selectedCourseId: id });
@@ -94,8 +89,8 @@ export function LearningProgressProvider({ children }: { children: ReactNode }) 
       activityDates: [], reviewTopics: [], lessonSession: null,
       activeLessonId: null, lastActivityAt: undefined, lastModuleCompletedAt: undefined,
     };
-    return commit(next);
-  }, [commit, progress]);
+    return account.update(account.user ? { resetProgress: true } : { progress: next });
+  }, [account.update, account.user, progress]);
   const value = useMemo(() => ({ progress, ready, warning, selectCourse, startLesson, recordAnswer, completeLesson, resetProgress }), [progress, ready, warning, selectCourse, startLesson, recordAnswer, completeLesson, resetProgress]);
   return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>;
 }

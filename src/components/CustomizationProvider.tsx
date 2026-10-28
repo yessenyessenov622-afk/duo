@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { DEFAULT_SETTINGS, appearanceRuntime, normalizeSettings, readSettings, writeSettings } from "@/src/lib/customization";
+import { DEFAULT_SETTINGS, appearanceRuntime, normalizeSettings } from "@/src/lib/customization";
+import { useAccount } from "@/src/components/AccountProvider";
 import { loadWallpaper } from "@/src/lib/wallpaper-storage";
 import type { CustomizationSettings } from "@/src/types/customization";
 
@@ -16,15 +17,10 @@ type CustomizationContextValue = {
 const CustomizationContext = createContext<CustomizationContextValue | null>(null);
 
 export function CustomizationProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const [ready, setReady] = useState(false);
+  const account = useAccount();
+  const settings = account.data.settings;
+  const ready = account.ready;
   const [warning, setWarning] = useState("");
-  useEffect(() => {
-    const stored = readSettings();
-    setSettings(stored.settings);
-    setWarning(stored.warning);
-    setReady(true);
-  }, []);
   useEffect(() => {
     if (!ready) return;
     const root = document.documentElement;
@@ -36,7 +32,10 @@ export function CustomizationProvider({ children }: { children: ReactNode }) {
     let active = true;
     let imageUrl = "";
     if (settings.background === "image") {
-      loadWallpaper(settings.customWallpaperId).then((blob) => {
+      const wallpaper = account.user
+        ? fetch(`/api/account/wallpaper?v=${account.data.revision}`, { credentials: "same-origin", cache: "no-store", headers: { "X-Kiraquest-Account": account.user.id } }).then((r) => { if (!r.ok) throw new Error("wallpaper_unavailable"); return r.blob(); })
+        : loadWallpaper(settings.customWallpaperId);
+      wallpaper.then((blob) => {
         if (!active || !blob) return;
         imageUrl = URL.createObjectURL(blob);
         root.style.setProperty("--wallpaper-image", `url("${imageUrl}")`);
@@ -48,17 +47,16 @@ export function CustomizationProvider({ children }: { children: ReactNode }) {
       root.style.removeProperty("--wallpaper-image");
       if (imageUrl) URL.revokeObjectURL(imageUrl);
     };
-  }, [settings, ready]);
+  }, [settings, ready, account.user, account.data.revision]);
   const save = useCallback((next: CustomizationSettings) => {
     const normalized = normalizeSettings(next);
-    if (!writeSettings(normalized)) {
-      setWarning("Не удалось сохранить оформление. Браузер запретил запись или хранилище заполнено. Прежние настройки сохранены; разреши хранение данных и повтори попытку.");
+    if (!account.update({ settings: normalized })) {
+      setWarning("Не удалось принять изменения оформления. Проверь состояние аккаунта или доступ к гостевому хранилищу.");
       return false;
     }
-    setSettings(normalized);
     setWarning("");
     return true;
-  }, []);
+  }, [account.update]);
   const reset = useCallback(() => save(DEFAULT_SETTINGS), [save]);
   const dismissWarning = useCallback(() => setWarning(""), []);
   const value = useMemo(() => ({ settings, ready, warning, dismissWarning, save, reset }), [settings, ready, warning, dismissWarning, save, reset]);

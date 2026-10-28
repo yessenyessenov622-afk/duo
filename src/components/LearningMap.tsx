@@ -5,9 +5,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ALL_COURSES_ID, getLessonStatus, getTopicStatus, learningCourses, topicProgress } from "@/src/data/learning-map";
 import { lessonsForCourse, streakFromActivity } from "@/src/lib/learning-progress";
 import { useLearningProgress } from "@/src/components/LearningProgressProvider";
+import { useAccount } from "@/src/components/AccountProvider";
 import type { LearningChapter, LearningCourse, LessonStatus } from "@/src/types/learning";
 
-const MAP_FILTER_KEY = "kiraquest.map.course-filter.v1";
 const STATUS_COPY: Record<LessonStatus, { label: string; icon: string }> = {
   completed: { label: "Завершён", icon: "✓" }, next: { label: "Следующий", icon: "→" },
   available: { label: "Можно начать", icon: "✦" }, locked: { label: "Закрыт", icon: "⌑" },
@@ -35,18 +35,13 @@ function CourseChapter({ course, chapter, completedIds, startedIds, onSelect }: 
 }
 
 export function LearningMap() {
+  const account = useAccount();
   const { progress, warning, resetProgress } = useLearningProgress();
-  const [filterId, setFilterId] = useState<string>(ALL_COURSES_ID);
+  const filterId = account.data.preferences.mapFilter;
   const [selected, setSelected] = useState<{ course: LearningCourse; chapter: LearningChapter; status: LessonStatus } | null>(null);
   const [hintOpen, setHintOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  useEffect(() => {
-    try {
-      const savedFilter = window.localStorage.getItem(MAP_FILTER_KEY);
-      if (savedFilter && (savedFilter === ALL_COURSES_ID || learningCourses.some((course) => course.id === savedFilter))) setFilterId(savedFilter);
-    } catch { /* Filtering still works in memory if storage is unavailable. */ }
-  }, []);
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!selected || !dialog) return;
@@ -71,14 +66,13 @@ export function LearningMap() {
   const streak = streakFromActivity(progress.activityDates);
 
   const chooseFilter = (value: string) => {
-    setFilterId(value);
-    try { window.localStorage.setItem(MAP_FILTER_KEY, value); } catch { /* Keep current filter in memory. */ }
+    account.update({ preferences: { ...account.data.preferences, mapFilter: value } });
   };
   const openTopic = (course: LearningCourse, chapter: LearningChapter, status: LessonStatus) => {
     setSelected({ course, chapter, status });
   };
   const handleReset = () => {
-    if (!window.confirm("Сбросить локальный учебный прогресс и демонаграды? Настройки темы и маскота останутся.")) return;
+    if (!window.confirm(account.user ? "Сбросить учебный прогресс и награды этого аккаунта на сервере?" : "Сбросить гостевой учебный прогресс и награды этого браузера?")) return;
     resetProgress();
   };
   const startHref = nextLesson ? `/lessons?lesson=${encodeURIComponent(nextLesson.lesson.id)}` : null;
