@@ -10,6 +10,7 @@ export default async function LessonsPage({ searchParams }: LessonsPageProps) {
   return (
     <>
       <PageHeading
+        className="lessons-page-heading"
         eyebrow={lessonId ? "ОДИН ШАГ ЗА РАЗ" : "ПРАКТИЧЕСКИЕ НАВЫКИ"}
         title={lessonId ? "Короткий урок" : "Каталог уроков"}
         retroTitle={lessonId ? undefined : "Библиотека курсов"}

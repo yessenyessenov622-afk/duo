@@ -111,8 +111,11 @@ html[data-motion-intensity="high"] .mascot-avatar .mascot-eyes{animation-duratio
 .home-path-progress i{display:block;height:100%;background:var(--accent);border-radius:inherit}
 .home-path-progress small{color:var(--muted);font-size:.75rem;white-space:nowrap}
 .home-path-mascot{width:min(100%,380px);height:380px;justify-self:center}
-.course-catalog>header h2{margin:5px 0;color:var(--ink);font-size:1.5rem}
-.course-catalog>header p{max-width:700px;color:var(--muted);line-height:1.6}
+.course-catalog>header h2{margin:5px 0;color:var(--ink);font-size:1.5rem;font-weight:700;line-height:1.25}
+.course-catalog>header p:not(.eyebrow){max-width:700px;color:var(--ink);font-size:1rem;font-weight:400;line-height:1.6}
+html[data-theme] .course-catalog>header .eyebrow,html[data-theme] .lessons-page-heading .eyebrow{color:var(--ink);font-size:.75rem;font-weight:700;line-height:1.5;letter-spacing:.06em}
+.lessons-page-heading h1{font-weight:800;line-height:1.2}
+html[data-theme] .lessons-page-heading .lead{color:var(--ink);font-size:1rem;font-weight:400;line-height:1.6}
 .course-catalog-card .eyebrow{margin:0 0 3px;color:var(--course-accent)}
 .course-catalog-card .button{min-height:42px}
 .learner-profile{display:grid;gap:16px}
