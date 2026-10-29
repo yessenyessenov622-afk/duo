@@ -15,8 +15,8 @@ export function AccountBoundary({ children }: { children: ReactNode }) {
 }
 
 export function AccountStatus() {
-  const { user, status, configured } = useAccount();
-  return <div className="account-status">{user ? <Link href="/profile">{status === "locked" ? "Аккаунт заблокирован" : user.name}</Link> : <Link href="/sign-in">{configured ? "Войти по почте" : "Гостевой режим"}</Link>}</div>;
+  const { user, status, passwordConfigured, googleConfigured } = useAccount();
+  return <div className="account-status">{user ? <Link href="/profile">{status === "locked" ? "Аккаунт заблокирован" : user.name}</Link> : <Link href="/sign-in">{passwordConfigured || googleConfigured ? "Войти" : "Гостевой режим"}</Link>}</div>;
 }
 
 export function AccountStorageNote() {

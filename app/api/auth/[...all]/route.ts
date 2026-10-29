@@ -33,6 +33,23 @@ export async function POST(request: Request) {
       return privateResponse(await getAuth().handler(request));
     }
     const input = await readJson(request, 4096);
+    if (path === "/api/auth/sign-in/email" || path === "/api/auth/sign-up/email") {
+      const config = authConfiguration();
+      if (!config?.passwordEnabled) throw new ApiError(404, "not_found", "Такого действия нет.");
+      const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
+      const password = input.password;
+      if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || typeof password !== "string" || password.length < 12 || password.length > 128) throw new ApiError(400, "invalid_credentials", "Проверь почту и пароль: пароль должен содержать от 12 до 128 символов.");
+      const digest = createHmac("sha256", config.secret).update(`password-limit:${email}`).digest("hex");
+      const claimed = await getPool().query("INSERT INTO kiraquest_password_limits (address_hash, window_start, attempts) VALUES ($1, CURRENT_TIMESTAMP, 1) ON CONFLICT (address_hash) DO UPDATE SET window_start = CASE WHEN kiraquest_password_limits.window_start <= CURRENT_TIMESTAMP - INTERVAL '15 minutes' THEN CURRENT_TIMESTAMP ELSE kiraquest_password_limits.window_start END, attempts = CASE WHEN kiraquest_password_limits.window_start <= CURRENT_TIMESTAMP - INTERVAL '15 minutes' THEN 1 ELSE kiraquest_password_limits.attempts + 1 END WHERE kiraquest_password_limits.window_start <= CURRENT_TIMESTAMP - INTERVAL '15 minutes' OR kiraquest_password_limits.attempts < 10 RETURNING address_hash", [digest]);
+      if (!claimed.rowCount) throw new ApiError(429, "sign_in_limited", "Слишком много попыток. Подожди 15 минут и попробуй снова.", 900);
+      const headers = new Headers(request.headers); headers.delete("content-length"); headers.set("content-type", "application/json");
+      const normalized = new Request(request.url, { method: "POST", headers, body: JSON.stringify({ email, password, ...(path.endsWith("sign-up/email") ? { name: "Ученик" } : {}) }) });
+      const response = await getAuth().handler(normalized);
+      if (!response.ok) throw new ApiError(response.status === 429 ? 429 : 400, "invalid_credentials", "Не удалось выполнить вход или регистрацию. Проверь данные и попробуй снова.");
+      const responseHeaders = new Headers(response.headers); for (const [name, value] of Object.entries(PRIVATE_HEADERS)) responseHeaders.set(name, value);
+      responseHeaders.set("content-type", "application/json"); responseHeaders.delete("content-length");
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: responseHeaders });
+    }
     if (path === "/api/auth/email-otp/send-verification-otp" || path === "/api/auth/sign-in/email-otp") {
       const config = authConfiguration();
       if (!config?.mail) throw new ApiError(503, "auth_not_configured", "Вход по почте пока не настроен.");

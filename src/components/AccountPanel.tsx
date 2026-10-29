@@ -28,6 +28,34 @@ export function GoogleSignIn() {
   </div>;
 }
 
+export function PasswordSignIn() {
+  const { passwordConfigured, refresh } = useAccount();
+  const [secure, setSecure] = useState(false);
+  const [signup, setSignup] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  useEffect(() => { setSecure(window.location.protocol === "https:"); }, []);
+  const submit = async (event: FormEvent) => {
+    event.preventDefault(); setBusy(true); setError("");
+    try {
+      await accountRequest(signup ? "/api/auth/sign-up/email" : "/api/auth/sign-in/email", { method: "POST", body: JSON.stringify({ email, password }) });
+      setPassword(""); await refresh(); window.location.assign("/profile");
+    } catch (e) { setError(e instanceof Error ? e.message : "Не удалось выполнить действие."); setPassword(""); }
+    finally { setBusy(false); }
+  };
+  if (!secure || !passwordConfigured) return <p className="account-note">Вход по паролю пока не настроен. Для безопасного входа необходим HTTPS. Гостевое обучение доступно.</p>;
+  return <form className="pin-form" onSubmit={(event) => void submit(event)}>
+    <label>Электронная почта<input type="email" autoComplete="email" maxLength={254} required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
+    <label>Пароль KiraQuest<input type="password" autoComplete={signup ? "new-password" : "current-password"} minLength={12} maxLength={128} required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+    <p className="account-note">Используй отдельный пароль KiraQuest длиной от 12 символов. Пароль от почтового ящика вводить не нужно.</p>
+    {error && <p className="account-error" role="alert">{error}</p>}
+    <div className="account-actions"><button className="button button-primary" disabled={busy} type="submit">{busy ? "Подожди…" : signup ? "Создать аккаунт" : "Войти"}</button><button type="button" className="text-button" disabled={busy} onClick={() => { setSignup(!signup); setPassword(""); setError(""); }}>{signup ? "Уже есть аккаунт? Войти" : "Создать аккаунт"}</button></div>
+    <p className="account-note">Восстановление пароля по почте пока не настроено. Сохрани пароль в менеджере паролей.</p>
+  </form>;
+}
+
 export function EmailSignIn({ recoveryEmail }: { recoveryEmail?: string }) {
   const { configured, refresh } = useAccount();
   const [email, setEmail] = useState(recoveryEmail ?? "");
@@ -126,10 +154,10 @@ export function AccountPanel() {
     try { await fn(); setNotice(message); } catch (e) { setNotice(e instanceof Error ? e.message : "Не удалось выполнить действие."); }
     finally { setBusy(false); }
   };
-  if (!account.user) return <section className="account-card"><span className="eyebrow">АККАУНТ KIRAQUEST</span><h2>Сохрани свой учебный путь</h2><p>Войди по почте, чтобы продолжать обучение на других устройствах. Гостевой прогресс можно будет перенести.</p><EmailSignIn />{account.googleConfigured && <GoogleSignIn />}</section>;
+  if (!account.user) return <section className="account-card"><span className="eyebrow">АККАУНТ KIRAQUEST</span><h2>Сохрани свой учебный путь</h2><p>Войди по почте, чтобы продолжать обучение на других устройствах. Гостевой прогресс можно будет перенести.</p><PasswordSignIn />{account.googleConfigured && <GoogleSignIn />}</section>;
   return <div className="account-sections">
     {account.syncStatus === "error" && <div className="account-feedback"><p>Часть изменений ещё не сохранена. На общем устройстве можно выйти, отказавшись от этих изменений.</p><button className="button button-outline" disabled={busy} onClick={() => { if (window.confirm("Выйти и удалить из памяти несохранённые изменения? Уже сохранённый прогресс останется на сервере.")) void execute(async () => { await account.signOut(true); window.location.replace("/sign-in?logged_out=1"); }); }}>Выйти без несохранённых изменений</button></div>}
-    <section className="account-card"><div className="account-identity">{account.user.image ? <img src={account.user.image} referrerPolicy="no-referrer" alt="" width={64} height={64} /> : <span className="account-avatar" aria-hidden="true">{account.user.name.slice(0, 1)}</span>}<div><span className="eyebrow">АККАУНТ KIRAQUEST</span><h2>{account.user.name}</h2><p>{account.user.email}</p></div></div><div className="account-actions">{account.pin.enabled && <button className="button button-outline" type="button" disabled={busy} onClick={() => void execute(() => account.pinAction("lock"))}>Заблокировать</button>}<button className="button button-outline" type="button" disabled={busy} onClick={() => void execute(async () => { await account.signOut(); window.location.replace("/sign-in?logged_out=1"); })}>Выйти из аккаунта</button></div><p className="account-note">На общем устройстве выходи из аккаунта после занятия. PIN не заменяет подтверждение почты на новом устройстве.</p></section>
+    <section className="account-card"><div className="account-identity">{account.user.image ? <img src={account.user.image} referrerPolicy="no-referrer" alt="" width={64} height={64} /> : <span className="account-avatar" aria-hidden="true">{account.user.name.slice(0, 1)}</span>}<div><span className="eyebrow">АККАУНТ KIRAQUEST</span><h2>{account.user.name}</h2><p>{account.user.email}</p><p>{account.user.emailVerified ? "Почта подтверждена" : "Почта не подтверждена"}</p></div></div><div className="account-actions">{account.pin.enabled && <button className="button button-outline" type="button" disabled={busy} onClick={() => void execute(() => account.pinAction("lock"))}>Заблокировать</button>}<button className="button button-outline" type="button" disabled={busy} onClick={() => void execute(async () => { await account.signOut(); window.location.replace("/sign-in?logged_out=1"); })}>Выйти из аккаунта</button></div><p className="account-note">На общем устройстве выходи из аккаунта после занятия. PIN не заменяет вход на новом устройстве.</p></section>
     {account.guest && <section className="account-card"><h2>Найден гостевой прогресс</h2><p>В этом браузере: {account.guest.progress.completedLessons.length} завершённых уроков, {account.guest.progress.xp} XP; спутник — {mascotPreviews.find((mascot) => mascot.id === account.guest?.settings.mascot.id)?.name ?? "Нэо"}. Гостевые настройки темы, стиля и фона можно перенести вместе со спутником.</p><p>В аккаунте: {account.data.progress.completedLessons.length} завершённых уроков и {account.data.progress.xp} XP. Перенос объединит прогресс без повторного начисления за один урок. Оформление аккаунта останется прежним, если не выбрать гостевое.</p><label className="account-checkbox"><input type="checkbox" checked={guestSettings} onChange={(e) => setGuestSettings(e.target.checked)} />Использовать гостевое оформление и маскота</label><div className="account-actions"><button className="button button-primary" disabled={busy} onClick={() => void execute(() => account.importGuest(guestSettings), "Гостевой прогресс перенесён в аккаунт.")}>Перенести в аккаунт</button><button className="text-button" disabled={busy} onClick={account.dismissGuest}>Пока оставить в браузере</button></div></section>}
     <section className="account-card"><h2>Быстрая разблокировка</h2>{account.pin.enabled ? <><p>PIN KiraQuest включён на этом устройстве. Разблокировка действует до 15 минут; затем потребуется PIN снова.</p>{!pinMode && <div className="account-actions"><button className="button button-outline" onClick={() => setPinMode("change")}>Изменить PIN</button><button className="text-button" onClick={() => setPinMode("disable")}>Отключить PIN</button></div>}</> : <><p>Можно защитить KiraQuest на этом устройстве необязательным PIN из 6 цифр.</p>{!pinMode && !skipPin && <div className="account-actions"><button className="button button-primary" onClick={() => setPinMode("setup")}>Создать PIN</button><button className="text-button" onClick={() => setSkipPin(true)}>Сейчас без PIN</button></div>}{skipPin && !pinMode && <button className="text-button" onClick={() => setPinMode("setup")}>Настроить PIN позже</button>}</>}{pinMode && <PinForm mode={pinMode} onDone={() => setPinMode(null)} />}</section>
     {notice && <p className="account-feedback" role="status">{notice}</p>}
@@ -144,5 +172,5 @@ export function SignInScreen() {
     const errors = params.getAll("error");
     setNotice(errors.some((e) => ["access_denied", "recovery_cancelled"].includes(e)) ? "Вход отменён. Ты можешь попробовать ещё раз." : errors.length ? "Вход не завершён. Попробуй снова. При восстановлении используй ту же почту." : params.has("logged_out") ? "Ты вышел из аккаунта. Его данные удалены из состояния приложения." : "");
   }, []);
-  return <section className="account-card sign-in-card"><span className="eyebrow">ТВОЙ АККАУНТ</span><h1>Добро пожаловать в KiraQuest</h1><p>Учебный прогресс, маскот и оформление будут доступны на твоих устройствах.</p>{notice && <p className="account-feedback" role="status">{notice}</p>}{account.user ? <Link className="button button-primary" href="/profile">Открыть профиль</Link> : <><EmailSignIn />{account.googleConfigured && <GoogleSignIn />}</>}<p className="account-note">Аккаунт создаётся после подтверждения почты.</p><Link href="/" className="text-button">Продолжить как гость</Link></section>;
+  return <section className="account-card sign-in-card"><span className="eyebrow">ТВОЙ АККАУНТ</span><h1>Добро пожаловать в KiraQuest</h1><p>Учебный прогресс, маскот и оформление будут доступны на твоих устройствах.</p>{notice && <p className="account-feedback" role="status">{notice}</p>}{account.user ? <Link className="button button-primary" href="/profile">Открыть профиль</Link> : <><PasswordSignIn />{account.googleConfigured && <GoogleSignIn />}</>}<p className="account-note">До настройки подтверждения почта нового аккаунта остаётся неподтверждённой.</p><Link href="/" className="text-button">Продолжить как гость</Link></section>;
 }

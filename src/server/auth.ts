@@ -11,22 +11,23 @@ import { getPool } from "./db";
 import { ApiError } from "./http";
 
 export type SessionIdentity = {
-  user: { id: string; name: string; email: string; image?: string | null };
+  user: { id: string; name: string; email: string; image?: string | null; emailVerified?: boolean };
   session: { id: string; createdAt: Date; expiresAt: Date; token: string };
 };
 
-export type AuthConfiguration = { databaseURL: string; baseURL: string; secret: string; clientId: string; clientSecret: string; mail?: OtpMailConfig | null };
+export type AuthConfiguration = { databaseURL: string; baseURL: string; secret: string; clientId: string; clientSecret: string; mail?: OtpMailConfig | null; passwordEnabled?: boolean };
 
 export function authConfiguration(env: Record<string, string | undefined> = process.env): AuthConfiguration | null {
   const { DATABASE_URL, BETTER_AUTH_URL, BETTER_AUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = env;
   const mail = otpMailConfiguration(env);
-  if (!DATABASE_URL || !BETTER_AUTH_URL || !BETTER_AUTH_SECRET || BETTER_AUTH_SECRET.length < 32 || (!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) && !mail)) return null;
+  const passwordEnabled = env.KIRAQUEST_PASSWORD_AUTH === "enabled";
+  if (!DATABASE_URL || !BETTER_AUTH_URL || !BETTER_AUTH_SECRET || BETTER_AUTH_SECRET.length < 32 || (!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) && !mail && !passwordEnabled)) return null;
   try {
     const url = new URL(BETTER_AUTH_URL);
     // Secure cookies are never weakened for the current HTTP-only EC2 address.
     if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash || url.pathname !== "/") return null;
     if (env.NODE_ENV === "production" && (isIP(url.hostname) || url.hostname === "localhost" || !url.hostname.includes("."))) return null;
-    return { databaseURL: DATABASE_URL, baseURL: url.origin, secret: BETTER_AUTH_SECRET, clientId: GOOGLE_CLIENT_ID ?? "", clientSecret: GOOGLE_CLIENT_SECRET ?? "", mail };
+    return { databaseURL: DATABASE_URL, baseURL: url.origin, secret: BETTER_AUTH_SECRET, clientId: GOOGLE_CLIENT_ID ?? "", clientSecret: GOOGLE_CLIENT_SECRET ?? "", mail, passwordEnabled };
   } catch { return null; }
 }
 
@@ -40,7 +41,7 @@ export function createAuth(config: AuthConfiguration, database: Pool, sendOtp = 
     basePath: "/api/auth",
     secret: config.secret,
     database,
-    emailAndPassword: { enabled: false },
+    emailAndPassword: { enabled: config.passwordEnabled === true, minPasswordLength: 12, maxPasswordLength: 128, requireEmailVerification: false },
     socialProviders: config.clientId && config.clientSecret ? {
       google: {
         clientId: config.clientId,
@@ -77,7 +78,7 @@ export function createAuth(config: AuthConfiguration, database: Pool, sendOtp = 
       storage: "database",
       window: 60,
       max: 100,
-      customRules: { "/sign-in/social": { window: 60, max: 10 } },
+      customRules: { "/sign-in/social": { window: 60, max: 10 }, "/sign-in/email": { window: 60, max: 5 }, "/sign-up/email": { window: 60, max: 5 } },
     },
     telemetry: { enabled: false },
     logger: { disabled: true },
@@ -113,7 +114,7 @@ export async function requireSession(request: Request, authInstance = getAuth())
   // This header detects stale tabs; only the verified server session identifies
   // the owner. It is never accepted as an authentication credential.
   return {
-    user: { id: identity.user.id, name: identity.user.name, email: identity.user.email, image: identity.user.image },
+    user: { id: identity.user.id, name: identity.user.name, email: identity.user.email, image: identity.user.image, emailVerified: identity.user.emailVerified },
     session: { id: identity.session.id, createdAt: identity.session.createdAt, expiresAt: identity.session.expiresAt, token: identity.session.token },
   };
 }

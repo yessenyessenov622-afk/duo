@@ -6,15 +6,15 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  if (!isAuthConfigured()) return Response.json({ configured: false, googleConfigured: false, user: null, pin: { enabled: false, locked: false, retryAt: null } }, { headers: PRIVATE_HEADERS });
+  if (!isAuthConfigured()) return Response.json({ configured: false, googleConfigured: false, passwordConfigured: false, user: null, pin: { enabled: false, locked: false, retryAt: null } }, { headers: PRIVATE_HEADERS });
   try {
     const identity = await requireSession(request);
     const pin = await getPinStatus(request, identity);
     // Never return the opaque session token or any Google tokens to JavaScript.
     const config = authConfiguration();
-    return Response.json({ configured: !!config?.mail, googleConfigured: !!(config?.clientId && config?.clientSecret), user: identity.user, pin }, { headers: PRIVATE_HEADERS });
+    return Response.json({ configured: !!config?.mail, googleConfigured: !!(config?.clientId && config?.clientSecret), passwordConfigured: !!config?.passwordEnabled, user: identity.user, pin }, { headers: PRIVATE_HEADERS });
   } catch (e) {
-    if (e instanceof ApiError && e.status === 401) { const config = authConfiguration(); return Response.json({ configured: !!config?.mail, googleConfigured: !!(config?.clientId && config?.clientSecret), user: null, pin: { enabled: false, locked: false, retryAt: null } }, { headers: PRIVATE_HEADERS }); }
+    if (e instanceof ApiError && e.status === 401) { const config = authConfiguration(); return Response.json({ configured: !!config?.mail, googleConfigured: !!(config?.clientId && config?.clientSecret), passwordConfigured: !!config?.passwordEnabled, user: null, pin: { enabled: false, locked: false, retryAt: null } }, { headers: PRIVATE_HEADERS }); }
     return apiError(e);
   }
 }

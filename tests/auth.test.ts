@@ -177,7 +177,7 @@ test("real DB session checks isolate accounts, reject forged/expired cookies, an
     const b = await f.session("bob", "Bob");
     const accountRequest = (cookie: string, expected?: string) => new Request(`${origin}/api/account/data`, { headers: { cookie, ...(expected ? { "x-kiraquest-account": expected } : {}) } });
     const identity = await requireSession(accountRequest(a.cookie, "alice"), f.auth);
-    assert.deepEqual(Object.keys(identity.user).sort(), ["email", "id", "image", "name"]);
+    assert.deepEqual(Object.keys(identity.user).sort(), ["email", "emailVerified", "id", "image", "name"]);
     assert.equal(identity.user.id, "alice");
     assert.equal((await requireSession(accountRequest(b.cookie, "bob"), f.auth)).user.id, "bob");
     await assert.rejects(requireSession(accountRequest(b.cookie, "alice"), f.auth), apiCode("account_changed", 409));
