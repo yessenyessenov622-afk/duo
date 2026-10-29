@@ -1,15 +1,18 @@
 import "server-only";
 import { deliverSendGridMail, sendGridMailConfiguration, type SendGridMailConfig } from "./sendgrid-mail";
+import { deliverGmailMail, gmailMailConfiguration, type GmailMailConfig } from "./gmail-mail";
 
 export type OtpMailConfig =
   | { mode: "development" }
   | { mode: "resend"; apiKey: string; from: string }
-  | SendGridMailConfig;
+  | SendGridMailConfig
+  | GmailMailConfig;
 
 /** Development delivery is never enabled in a production process. */
 export function otpMailConfiguration(env: Record<string, string | undefined> = process.env): OtpMailConfig | null {
   if (env.KIRAQUEST_MAIL_MODE === "development" && env.NODE_ENV === "development") return { mode: "development" };
   if (env.KIRAQUEST_MAIL_MODE === "sendgrid") return sendGridMailConfiguration(env);
+  if (env.KIRAQUEST_MAIL_MODE === "gmail") return gmailMailConfiguration(env);
   if (env.KIRAQUEST_MAIL_MODE === "resend" && env.RESEND_API_KEY && env.KIRAQUEST_MAIL_FROM && !/[\r\n]/.test(env.KIRAQUEST_MAIL_FROM)) {
     return { mode: "resend", apiKey: env.RESEND_API_KEY, from: env.KIRAQUEST_MAIL_FROM };
   }
@@ -25,6 +28,9 @@ export async function deliverOtpMail(config: OtpMailConfig, email: string, otp: 
     return;
   }
   const action = purpose === "forget-password" ? "восстановления пароля" : purpose === "email-verification" ? "подтверждения почты" : "входа";
+  if (config.mode === "gmail") {
+    return deliverGmailMail(config, email, `Код ${action} в KiraQuest`, `Твой код ${action}: ${otp}\n\nЕсли ты не запрашивал код, просто проигнорируй это письмо.`);
+  }
   if (config.mode === "sendgrid") {
     return deliverSendGridMail(config, email, `Код ${action} в KiraQuest`, `Твой код ${action}: ${otp}\n\nЕсли ты не запрашивал код, просто проигнорируй это письмо.`, send);
   }
@@ -46,6 +52,9 @@ export async function deliverPasswordResetLink(config: OtpMailConfig, email: str
     if (process.env.NODE_ENV !== "development") throw new Error("Development mail is unavailable");
     console.info(`[KiraQuest development only] Password reset link for ${email}: ${url}`);
     return;
+  }
+  if (config.mode === "gmail") {
+    return deliverGmailMail(config, email, "Восстановление пароля KiraQuest", `Открой ссылку, чтобы изменить пароль. Она действует 30 минут и может быть использована один раз:\n\n${url}\n\nЕсли ты не запрашивал восстановление, проигнорируй это письмо.`);
   }
   if (config.mode === "sendgrid") {
     return deliverSendGridMail(config, email, "Восстановление пароля KiraQuest", `Открой ссылку, чтобы изменить пароль. Она действует 30 минут и может быть использована один раз:\n\n${url}\n\nЕсли ты не запрашивал восстановление, проигнорируй это письмо.`, send);
