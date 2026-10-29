@@ -14,6 +14,7 @@ export function LearnerProfile() {
   const { progress, ready } = useLearningProgress();
   const mascot = mascotPreviews.find((item) => item.id === settings.mascot.id) ?? mascotPreviews[0];
   const completed = progress.completedLessons.map(findLearningLesson).filter((match): match is NonNullable<ReturnType<typeof findLearningLesson>> => Boolean(match));
+
   return <div className="learner-profile">
     <section className="profile-banner profile-preview"><MascotAvatar id={mascot.id} accessory={settings.mascot.accessory} className="profile-mascot" state="rest"/><div className="profile-info"><span className="eyebrow">{user ? "ЛИЧНЫЙ ПРОФИЛЬ" : "ГОСТЕВОЙ ПРОФИЛЬ"}</span><h2>{user?.name ?? "Исследователь"}</h2><p>Твой спутник — {mascot.name}. Настрой его внешний вид или выбери другого в любой момент.</p><Link href="/mascots" className="button button-outline">Выбрать спутника</Link><Link href="/studio" className="text-button">Настроить вид →</Link></div></section>
     <section className="profile-stat-grid" aria-label="Результаты обучения"><article><span>Пройдено уроков</span><b>{ready ? progress.completedLessons.length : "—"}</b></article><article><span>Опыт</span><b>{ready ? progress.xp : "—"} XP</b></article><article><span>Учебные дни</span><b>{ready ? progress.activityDates.length : "—"}</b></article><article><span>Попытки ответов</span><b>{ready ? progress.totalAnswers : "—"}</b></article></section>

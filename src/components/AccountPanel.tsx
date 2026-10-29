@@ -28,10 +28,10 @@ export function GoogleSignIn() {
   </div>;
 }
 
-export function PasswordSignIn() {
+export function PasswordSignIn({ mode = "sign-in" }: { mode?: "sign-in" | "sign-up" }) {
   const { passwordConfigured, refresh } = useAccount();
   const [secure, setSecure] = useState(false);
-  const [signup, setSignup] = useState(false);
+  const signup = mode === "sign-up";
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
   const [showRecovery, setShowRecovery] = useState(false);
@@ -48,14 +48,15 @@ export function PasswordSignIn() {
     } catch (e) { setError(e instanceof Error ? e.message : "Не удалось выполнить действие."); setPassword(""); }
     finally { setBusy(false); }
   };
-  if (!secure || !passwordConfigured) return <p className="account-note">Вход по паролю пока не настроен. Для безопасного входа необходим HTTPS. Гостевое обучение доступно.</p>;
+  if (!secure) return <div><p className="account-note">Форма пароля доступна только по HTTPS. На этом HTTP-адресе пароль не запрашивается. Гостевое обучение доступно.</p><p className="account-note">{signup ? "Уже есть аккаунт?" : "Ещё нет аккаунта?"} <Link href={signup ? "/sign-in" : "/register"}>{signup ? "Войти" : "Зарегистрироваться"}</Link></p></div>;
+  if (!passwordConfigured) return <div><p className="account-note">Вход и регистрация по паролю пока не включены владельцем сайта. Гостевое обучение доступно.</p><p className="account-note">{signup ? "Уже есть аккаунт?" : "Ещё нет аккаунта?"} <Link href={signup ? "/sign-in" : "/register"}>{signup ? "Войти" : "Зарегистрироваться"}</Link></p></div>;
   return <form className="pin-form" onSubmit={(event) => void submit(event)}>
     {signup && <label>Ник пользователя<input type="text" autoComplete="username" minLength={3} maxLength={30} pattern="[A-Za-z0-9_]{3,30}" required value={nickname} onChange={(event) => setNickname(event.target.value)} /><small>От 3 до 30 латинских букв, цифр или знак подчёркивания.</small></label>}
     <label>{signup ? "Электронная почта" : "Электронная почта или ник"}<input type={signup ? "email" : "text"} autoComplete={signup ? "email" : "username"} maxLength={254} required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
     <label>Пароль KiraQuest<input type="password" autoComplete={signup ? "new-password" : "current-password"} minLength={12} maxLength={128} required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
     <p className="account-note">Используй отдельный пароль KiraQuest длиной от 12 символов. Пароль от почтового ящика вводить не нужно.</p>
     {error && <p className="account-error" role="alert">{error}</p>}
-    <div className="account-actions"><button className="button button-primary" disabled={busy} type="submit">{busy ? "Подожди…" : signup ? "Зарегистрироваться" : "Войти"}</button><button type="button" className="text-button" disabled={busy} onClick={() => { setSignup(!signup); setPassword(""); setError(""); setShowRecovery(false); }}>{signup ? "Уже есть аккаунт? Войти" : "Зарегистрироваться"}</button>{!signup && <button type="button" className="text-button" onClick={() => setShowRecovery(!showRecovery)} aria-expanded={showRecovery}>Забыли пароль?</button>}</div>
+    <div className="account-actions"><button className="button button-primary" disabled={busy} type="submit">{busy ? "Подожди…" : signup ? "Зарегистрироваться" : "Войти"}</button><Link className="text-button" href={signup ? "/sign-in" : "/register"}>{signup ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Зарегистрироваться"}</Link>{!signup && <button type="button" className="text-button" onClick={() => setShowRecovery(!showRecovery)} aria-expanded={showRecovery}>Забыли пароль?</button>}</div>
     {showRecovery && <p className="account-note" role="status">Восстановление пароля по почте пока не настроено. Сохрани пароль в менеджере паролей.</p>}
   </form>;
 }
@@ -176,5 +177,11 @@ export function SignInScreen() {
     const errors = params.getAll("error");
     setNotice(errors.some((e) => ["access_denied", "recovery_cancelled"].includes(e)) ? "Вход отменён. Ты можешь попробовать ещё раз." : errors.length ? "Вход не завершён. Попробуй снова. При восстановлении используй ту же почту." : params.has("logged_out") ? "Ты вышел из аккаунта. Его данные удалены из состояния приложения." : "");
   }, []);
-  return <section className="account-card sign-in-card"><span className="eyebrow">ТВОЙ АККАУНТ</span><h1>Добро пожаловать в KiraQuest</h1><p>Учебный прогресс, маскот и оформление будут доступны на твоих устройствах.</p>{notice && <p className="account-feedback" role="status">{notice}</p>}{account.user ? <Link className="button button-primary" href="/profile">Открыть профиль</Link> : <><PasswordSignIn />{account.googleConfigured && <GoogleSignIn />}</>}<p className="account-note">До настройки подтверждения почта нового аккаунта остаётся неподтверждённой.</p><Link href="/" className="text-button">Продолжить как гость</Link></section>;
+  return <section className="account-card sign-in-card"><span className="eyebrow">ТВОЙ АККАУНТ</span><h1>Добро пожаловать в KiraQuest</h1><p>Учебный прогресс, маскот и оформление будут доступны на твоих устройствах.</p>{notice && <p className="account-feedback" role="status">{notice}</p>}{account.user ? <Link className="button button-primary" href="/profile">Открыть профиль</Link> : <><PasswordSignIn />{account.googleConfigured && <GoogleSignIn />}</>}<Link href="/" className="text-button">Продолжить как гость</Link></section>;
+}
+
+export function RegisterScreen() {
+  const account = useAccount();
+  if (account.user) return <section className="account-card sign-in-card"><span className="eyebrow">ТВОЙ АККАУНТ</span><h1>Ты уже вошёл в KiraQuest</h1><p>Продолжай обучение или открой сохранённый профиль.</p><Link className="button button-primary" href="/profile">Открыть профиль</Link></section>;
+  return <section className="account-card sign-in-card"><span className="eyebrow">СОЗДАТЬ АККАУНТ</span><h1>Начни свой путь в KiraQuest</h1><p>Прогресс, XP, настройки и маскот будут сохраняться в аккаунте и станут доступны после повторного входа.</p><PasswordSignIn mode="sign-up" /><p className="account-note">Почта нового аккаунта пока не подтверждается. Не используй пароль от почты.</p><Link href="/" className="text-button">Продолжить как гость</Link></section>;
 }

@@ -1,3 +1,5 @@
-import { SignInScreen } from "@/src/components/AccountPanel";
+import { HardioAuthCard } from "@/src/components/HardioAuthCard";
 
-export default function SignInPage() { return <SignInScreen />; }
+export default function SignInPage() {
+  return <HardioAuthCard mode="sign-in" />;
+}

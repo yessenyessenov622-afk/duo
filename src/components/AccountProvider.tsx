@@ -6,7 +6,7 @@ import { PROGRESS_STORAGE_KEY, createInitialLearningProgress, readLearningProgre
 import { loadWallpaper } from "@/src/lib/wallpaper-storage";
 import type { CustomizationSettings } from "@/src/types/customization";
 import type { LearningProgress } from "@/src/types/learning";
-import type { AccountData, AccountPreferences } from "@/src/types/account";
+import type { AccountData, AccountPreferences, GuestDataImport } from "@/src/types/account";
 import { defaultAccountPreferences } from "@/src/lib/account-data";
 
 type User = { id: string; name: string; email: string; image?: string | null; emailVerified?: boolean };
@@ -19,7 +19,7 @@ type AccountContextValue = {
   status: Status; configured: boolean; googleConfigured: boolean; passwordConfigured: boolean; user: User | null; pin: PinStatus;
   data: AccountData; error: string; syncStatus: SyncStatus; guest: Guest | null;
   ready: boolean; update: (patch: Patch) => boolean; refresh: () => Promise<void>;
-  retrySync: () => void; signOut: (discardUnsaved?: boolean) => Promise<void>; importGuest: (useGuestSettings: boolean) => Promise<void>;
+  retrySync: () => void; signOut: (discardUnsaved?: boolean) => Promise<void>; importGuest: (useGuestSettings: boolean, source?: GuestDataImport) => Promise<void>;
   dismissGuest: () => void; pinAction: (action: string, fields?: Record<string, string>) => Promise<void>;
 };
 const AccountContext = createContext<AccountContextValue | null>(null);
@@ -298,24 +298,28 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     await refresh();
   }, [clearPrivate, refresh, handleDenied]);
 
-  const importGuest = useCallback(async (useGuestSettings: boolean) => {
-    if (!guest || state.current.status !== "ready") return;
+  const importGuest = useCallback(async (useGuestSettings: boolean, source?: GuestDataImport) => {
+    const sourceGuest = source ?? guest;
+    if (!sourceGuest || state.current.status !== "ready") throw new Error("Войди в аккаунт, чтобы перенести гостевой прогресс.");
     if (busy.current || Object.keys(pending.current).length) throw new Error("Дождись сохранения текущих изменений и повтори перенос.");
     const stamp = generation.current;
     const owner = state.current.user?.id;
     busy.current = true; importing.current = true;
     try {
-    if (useGuestSettings && guest.settings.background === "image") {
-      const blob = await loadWallpaper(guest.settings.customWallpaperId);
-      if (stamp !== generation.current) return;
+    if (useGuestSettings && sourceGuest.settings.background === "image") {
+      const blob = await loadWallpaper(sourceGuest.settings.customWallpaperId);
+      if (stamp !== generation.current) throw new Error("Аккаунт изменился во время переноса. Исходные данные не удалены.");
       if (blob) await accountRequest("/api/account/wallpaper", { method: "PUT", body: blob, headers: { "Content-Type": blob.type } }, owner);
     }
-    if (stamp !== generation.current) return;
-    const imported = await accountRequest<AccountData>("/api/account/import", { method: "POST", body: JSON.stringify({ ...guest, useGuestSettings }) }, owner);
-    if (stamp !== generation.current) return;
+    if (stamp !== generation.current) throw new Error("Аккаунт изменился во время переноса. Исходные данные не удалены.");
+    const imported = await accountRequest<AccountData>("/api/account/import", { method: "POST", body: JSON.stringify({ ...sourceGuest, useGuestSettings }) }, owner);
+    if (stamp !== generation.current) throw new Error("Аккаунт изменился во время переноса. Исходные данные не удалены.");
     setData(imported); state.current.data = imported;
-    try { localStorage.removeItem(PROGRESS_STORAGE_KEY); localStorage.removeItem(SETTINGS_KEY); localStorage.removeItem(IMPORT_KEY); } catch { /* Server records the import ID, so retry cannot duplicate rewards. */ }
-    setGuest(null); guestDismissed.current = true; setSyncStatus("saved");
+    if (!source) {
+      try { localStorage.removeItem(PROGRESS_STORAGE_KEY); localStorage.removeItem(SETTINGS_KEY); localStorage.removeItem(IMPORT_KEY); } catch { /* Server records the import ID, so retry cannot duplicate rewards. */ }
+      setGuest(null); guestDismissed.current = true;
+    }
+    setSyncStatus("saved");
     } finally { if (stamp === generation.current) { busy.current = false; importing.current = false; } }
   }, [guest]);
 
