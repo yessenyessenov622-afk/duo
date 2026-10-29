@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { getAuthTables } from "better-auth/db";
+import { hashPassword as legacyHashPassword } from "better-auth/crypto";
 import { newDb } from "pg-mem";
 import type { Pool } from "pg";
 import { createAuth, requireSession } from "../src/server/auth";
@@ -30,13 +31,15 @@ test("password registration uses a hash, keeps email unverified and supports sig
     const identity = await requireSession(new Request(`${origin}/private`, { headers: { cookie: cookies } }), auth);
     assert.equal(identity.user.emailVerified, false);
     const stored = await pool.query('SELECT password FROM "account"');
-    assert.ok(stored.rows[0].password); assert.notEqual(stored.rows[0].password, password);
+    assert.match(stored.rows[0].password, /^\$argon2id\$/); assert.notEqual(stored.rows[0].password, password);
     assert.equal((await post("sign-out", {}, cookies)).status, 200);
     await assert.rejects(requireSession(new Request(`${origin}/private`, { headers: { cookie: cookies } }), auth));
     assert.notEqual((await post("sign-in/email", { email, password: "incorrect-password" })).status, 200);
     assert.equal((await post("sign-in/email", { email, password })).status, 200);
     assert.equal((await post("sign-in/username", { username: "student_1", password })).status, 200);
     assert.notEqual((await post("sign-in/username", { username: "student_1", password: "incorrect-password" })).status, 200);
+    await pool.query('UPDATE "account" SET password = $1', [await legacyHashPassword(password)]);
+    assert.equal((await post("sign-in/email", { email, password })).status, 200);
     assert.notEqual((await post("sign-up/email", { email: "other@example.org", password, name: "Other", username: "STUDENT_1" })).status, 200);
     assert.notEqual((await post("sign-up/email", { email, password, name: "Other" })).status, 200);
     assert.equal((await pool.query('SELECT id FROM "user"')).rows.length, 1);

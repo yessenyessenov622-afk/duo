@@ -105,6 +105,32 @@ test("database isolates two users, persists settings, rejects stale device revis
   } finally { await pool.end(); }
 });
 
+test("a second device recovers lessons, activity, rewards, achievements and appearance", async () => {
+  const { pool, repository, transaction } = await fixture();
+  try {
+    const initial = await repository.read("alice");
+    const learning = progress(["hello-1", "hello-2"], {
+      activityDates: ["2026-10-27", "2026-10-28"],
+      claimedAchievements: ["first-lesson"],
+      totalAnswers: 12, correctAnswers: 10,
+    });
+    const appearance = normalizeSettings({ ...DEFAULT_SETTINGS, theme: "ocean", themeMode: "dark", visualStyle: "pixel-art", mascot: { id: "fox" } });
+    const saved = await repository.update("alice", { revision: initial.revision, progress: learning, settings: appearance });
+    const otherDevice = createAccountDataRepository(pool, transaction);
+    const restored = await otherDevice.read("alice");
+    assert.deepEqual(restored.progress.completedLessons, ["hello-1", "hello-2"]);
+    assert.deepEqual(restored.progress.activityDates, ["2026-10-27", "2026-10-28"]);
+    assert.deepEqual(restored.progress.claimedAchievements, ["first-lesson"]);
+    assert.equal(restored.progress.xp, 50);
+    assert.equal(restored.progress.tokens, 10);
+    assert.equal(restored.progress.totalAnswers, 12);
+    assert.equal(restored.progress.correctAnswers, 10);
+    assert.deepEqual(restored.settings, saved.settings);
+    assert.equal(restored.settings.mascot.id, "fox");
+    assert.equal(restored.settings.visualStyle, "pixel-art");
+  } finally { await pool.end(); }
+});
+
 test("guest import is idempotent per account and uses explicit consent for settings", async () => {
   const { pool, repository } = await fixture();
   try {

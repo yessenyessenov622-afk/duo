@@ -5,7 +5,8 @@ import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { emailOTP, username } from "better-auth/plugins";
 import { createHmac } from "node:crypto";
-import { deliverOtpMail, otpMailConfiguration, type OtpMailConfig } from "./otp-mail";
+import { deliverOtpMail, deliverPasswordResetLink, otpMailConfiguration, type OtpMailConfig } from "./otp-mail";
+import { hashAccountPassword, verifyAccountPassword } from "./password-hash";
 import type { Pool } from "pg";
 import { getPool } from "./db";
 import { ApiError } from "./http";
@@ -39,15 +40,30 @@ export async function hasPasswordCredential(email: string, database: Pick<Pool, 
   return !!result.rowCount;
 }
 
+export async function hasPasswordResetCredential(token: string, database: Pick<Pool, "query"> = getPool()): Promise<boolean> {
+  if (!/^[A-Za-z0-9]{24}$/.test(token)) return false;
+  // Better Auth validates expiration and atomically consumes the token when resetting.
+  const result = await database.query('SELECT 1 FROM "verification" v JOIN "account" a ON a."userId" = v.value WHERE v.identifier = $1 AND a."providerId" = $2 AND a.password IS NOT NULL LIMIT 1', [`reset-password:${token}`, "credential"]);
+  return !!result.rowCount;
+}
+
 /** The factory also permits testing the real adapter against an isolated DB. */
-export function createAuth(config: AuthConfiguration, database: Pool, sendOtp = deliverOtpMail) {
+export function createAuth(config: AuthConfiguration, database: Pool, sendOtp = deliverOtpMail, sendResetLink = deliverPasswordResetLink) {
   return betterAuth({
     appName: "KiraQuest",
     baseURL: config.baseURL,
     basePath: "/api/auth",
     secret: config.secret,
     database,
-    emailAndPassword: { enabled: config.passwordEnabled === true, minPasswordLength: 12, maxPasswordLength: 128, requireEmailVerification: !!config.mail, revokeSessionsOnPasswordReset: true },
+    emailAndPassword: {
+      enabled: config.passwordEnabled === true, minPasswordLength: 12, maxPasswordLength: 128,
+      requireEmailVerification: !!config.mail, revokeSessionsOnPasswordReset: true,
+      password: { hash: hashAccountPassword, verify: verifyAccountPassword },
+      resetPasswordTokenExpiresIn: 30 * 60,
+      ...(config.mail ? { sendResetPassword: async ({ user, token }: { user: { email: string }; token: string }) => {
+        await sendResetLink(config.mail!, user.email, `${config.baseURL}/reset-password#token=${token}`);
+      } } : {}),
+    },
     emailVerification: { sendOnSignUp: !!config.mail && config.passwordEnabled === true, autoSignInAfterVerification: false },
     socialProviders: config.clientId && config.clientSecret ? {
       google: {

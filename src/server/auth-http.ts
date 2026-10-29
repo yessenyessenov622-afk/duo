@@ -1,4 +1,4 @@
-import { authConfiguration, getAuth, hasPasswordCredential, requireSession } from "@/src/server/auth";
+import { authConfiguration, getAuth, hasPasswordCredential, hasPasswordResetCredential, requireSession } from "@/src/server/auth";
 import { ApiError, apiError, assertSameOrigin, PRIVATE_HEADERS, readJson } from "@/src/server/http";
 import { getPool } from "@/src/server/db";
 import { createHmac } from "node:crypto";
@@ -9,7 +9,7 @@ function privateResponse(response: Response): Response {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
-export function createAuthHttpHandlers(deps = { authConfiguration, getAuth, getPool, hasPasswordCredential, requireSession }) {
+export function createAuthHttpHandlers(deps: { authConfiguration: typeof authConfiguration; getAuth: typeof getAuth; getPool: typeof getPool; hasPasswordCredential: typeof hasPasswordCredential; requireSession: typeof requireSession; hasPasswordResetCredential?: typeof hasPasswordResetCredential } = { authConfiguration, getAuth, getPool, hasPasswordCredential, requireSession }) {
 const { authConfiguration: configForRequest, getAuth: authForRequest, getPool: poolForRequest, hasPasswordCredential: checkCredential, requireSession: authenticate } = deps;
 async function GET(request: Request) {
   try {
@@ -32,6 +32,30 @@ async function POST(request: Request) {
       return privateResponse(await authForRequest().handler(request));
     }
     const input = await readJson(request, 4096);
+    if (path === "/api/auth/request-password-reset" || path === "/api/auth/reset-password") {
+      const config = configForRequest();
+      if (!config?.passwordEnabled || !config.mail) throw new ApiError(503, "auth_not_configured", "Восстановление пароля пока не настроено.");
+      const requesting = path.endsWith("request-password-reset");
+      let body: object;
+      if (requesting) {
+        const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
+        if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new ApiError(400, "invalid_email", "Проверь адрес электронной почты.");
+        const digest = createHmac("sha256", config.secret).update(`otp-cooldown:${email}`).digest("hex");
+        const claimed = await poolForRequest().query("INSERT INTO kiraquest_otp_send_limits (address_hash, last_sent_at) VALUES ($1, CURRENT_TIMESTAMP) ON CONFLICT (address_hash) DO UPDATE SET last_sent_at = CURRENT_TIMESTAMP WHERE kiraquest_otp_send_limits.last_sent_at <= CURRENT_TIMESTAMP - INTERVAL '60 seconds' RETURNING address_hash", [digest]);
+        if (!claimed.rowCount) throw new ApiError(429, "otp_cooldown", "Подожди минуту перед повторной отправкой.", 60);
+        // Avoid creating a credential for OAuth-only users. The response does not reveal account existence.
+        if (!await checkCredential(email)) return Response.json({ success: true }, { headers: PRIVATE_HEADERS });
+        body = { email };
+      } else {
+        const token = typeof input.token === "string" ? input.token : "";
+        if (!/^[A-Za-z0-9]{24}$/.test(token) || typeof input.newPassword !== "string" || input.newPassword.length < 12 || input.newPassword.length > 128 || !await (deps.hasPasswordResetCredential ?? hasPasswordResetCredential)(token)) throw new ApiError(400, "reset_failed", "Ссылка недействительна или срок её действия истёк. Запроси новую.");
+        body = { token, newPassword: input.newPassword };
+      }
+      const headers = new Headers(request.headers); headers.delete("content-length"); headers.set("content-type", "application/json");
+      const response = await authForRequest().handler(new Request(request.url, { method: "POST", headers, body: JSON.stringify(body) }));
+      if (!response.ok) throw new ApiError(response.status === 429 ? 429 : 400, "reset_failed", "Не удалось выполнить действие. Запроси новую ссылку и попробуй снова.");
+      return Response.json({ success: true }, { headers: PRIVATE_HEADERS });
+    }
     if (path === "/api/auth/sign-in/email" || path === "/api/auth/sign-in/username" || path === "/api/auth/sign-up/email") {
       const config = configForRequest();
       if (!config?.passwordEnabled) throw new ApiError(404, "not_found", "Такого действия нет.");

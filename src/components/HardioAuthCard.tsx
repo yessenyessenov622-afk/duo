@@ -62,9 +62,11 @@ export function HardioAuthCard({ mode }: { mode: "register" | "sign-in" }) {
   const [username, setUsername] = useState("");
   const [emailOrLogin, setEmailOrLogin] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [flow, setFlow] = useState<"auth" | "verify" | "verified" | "reset-request" | "reset-code" | "reset-done">("auth");
+  const [flow, setFlow] = useState<"auth" | "verify" | "verified" | "reset-request" | "reset-sent">("auth");
   const [otp, setOtp] = useState("");
   const [notice, setNotice] = useState("");
   const [secure, setSecure] = useState(false);
@@ -74,19 +76,23 @@ export function HardioAuthCard({ mode }: { mode: "register" | "sign-in" }) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setBusy(true);
     setError("");
+    if (isRegister && password !== confirmPassword) {
+      setError("Пароли не совпадают. Проверь их и попробуй снова.");
+      return;
+    }
+    setBusy(true);
 
     try {
       if (!account.passwordConfigured || window.location.protocol !== "https:") {
         throw new Error("Вход по паролю недоступен.");
       }
-      const byUsername = !isRegister && !emailOrLogin.includes("@");
       await accountRequest(
-        isRegister ? "/api/auth/sign-up/email" : byUsername ? "/api/auth/sign-in/username" : "/api/auth/sign-in/email",
-        { method: "POST", body: JSON.stringify(byUsername ? { username: emailOrLogin, password } : { email: emailOrLogin, password, ...(isRegister ? { username } : {}) }) }
+        isRegister ? "/api/auth/sign-up/email" : "/api/auth/sign-in/email",
+        { method: "POST", body: JSON.stringify({ email: emailOrLogin, password, ...(isRegister ? { username } : {}) }) }
       );
       setPassword("");
+      setConfirmPassword("");
       if (isRegister) {
         setNotice("Если регистрация выполнена, на указанную почту отправлен код подтверждения.");
         setFlow("verify");
@@ -96,6 +102,7 @@ export function HardioAuthCard({ mode }: { mode: "register" | "sign-in" }) {
       router.push("/profile");
     } catch (err) {
       setPassword("");
+      setConfirmPassword("");
       setError(err instanceof Error ? err.message : "Произошла ошибка при отправке формы");
     } finally {
       setBusy(false);
@@ -106,14 +113,11 @@ export function HardioAuthCard({ mode }: { mode: "register" | "sign-in" }) {
     e.preventDefault(); setBusy(true); setError(""); setNotice("");
     try {
       if (flow === "reset-request") {
-        await accountRequest("/api/auth/email-otp/request-password-reset", { method: "POST", body: JSON.stringify({ email: emailOrLogin }) });
-        setNotice("Если аккаунт существует, код отправлен на указанную почту."); setFlow("reset-code");
+        await accountRequest("/api/auth/request-password-reset", { method: "POST", body: JSON.stringify({ email: emailOrLogin }) });
+        setNotice("Если аккаунт существует, на указанную почту отправлена ссылка для восстановления пароля."); setFlow("reset-sent");
       } else if (flow === "verify") {
         await accountRequest("/api/auth/email-otp/verify-email", { method: "POST", body: JSON.stringify({ email: emailOrLogin, otp }) });
         setOtp(""); setFlow("verified");
-      } else if (flow === "reset-code") {
-        await accountRequest("/api/auth/email-otp/reset-password", { method: "POST", body: JSON.stringify({ email: emailOrLogin, otp, password }) });
-        setOtp(""); setPassword(""); setFlow("reset-done");
       }
     } catch (err) { setError(err instanceof Error ? err.message : "Не удалось выполнить действие. Попробуй снова."); }
     finally { setBusy(false); }
@@ -148,12 +152,11 @@ export function HardioAuthCard({ mode }: { mode: "register" | "sign-in" }) {
         {error && <div className="hardio-error" role="alert">{error}</div>}
         {notice && <p className="account-note" role="status">{notice}</p>}
 
-        {account.status === "loading" ? <p className="account-note" role="status">Проверяем состояние аккаунта…</p> : account.user ? <Link href="/profile" className="hardio-button-primary">Открыть профиль</Link> : !secure ? <p className="account-note">Вход по паролю доступен только по HTTPS. Гостевое обучение доступно.</p> : !account.passwordConfigured ? <p className="account-note">Вход и регистрация по паролю пока не включены владельцем сайта. Гостевое обучение доступно.</p> : flow === "verified" || flow === "reset-done" ? <div className="hardio-form"><p className="account-note">{flow === "verified" ? "Почта подтверждена. Теперь можно войти." : "Пароль изменён. Теперь можно войти."}</p><Link href="/sign-in" className="hardio-button-primary" onClick={() => setFlow("auth")}>Войти</Link></div> : flow !== "auth" ? <form className="hardio-form" onSubmit={handleCode}>
+        {account.status === "loading" ? <p className="account-note" role="status">Проверяем состояние аккаунта…</p> : account.user ? <Link href="/profile" className="hardio-button-primary">Открыть профиль</Link> : !secure ? <p className="account-note">Вход по паролю доступен только по HTTPS. Гостевое обучение доступно.</p> : !account.passwordConfigured ? <p className="account-note">Вход и регистрация по паролю пока не включены владельцем сайта. Гостевое обучение доступно.</p> : flow === "verified" || flow === "reset-sent" ? <div className="hardio-form">{flow === "verified" && <p className="account-note">Почта подтверждена. Теперь можно войти.</p>}<Link href="/sign-in" className="hardio-button-primary" onClick={() => { setFlow("auth"); setNotice(""); }}>Войти</Link></div> : flow !== "auth" ? <form className="hardio-form" onSubmit={handleCode}>
           <label className="hardio-field-label" htmlFor="hardio-recovery-email">Электронная почта</label>
-          <input id="hardio-recovery-email" className="hardio-input" type="email" autoComplete="email" maxLength={254} required value={emailOrLogin} onChange={(e) => setEmailOrLogin(e.target.value)} />
-          {flow !== "reset-request" && <><label className="hardio-field-label" htmlFor="hardio-code">Код из письма</label><input id="hardio-code" className="hardio-input" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={otp} onChange={(e) => setOtp(e.target.value)} /></>}
-          {flow === "reset-code" && <><label className="hardio-field-label" htmlFor="hardio-new-password">Новый пароль</label><input id="hardio-new-password" className="hardio-input" type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={password} onChange={(e) => setPassword(e.target.value)} /></>}
-          <button className="hardio-button-primary" disabled={busy} type="submit">{busy ? "Подожди…" : flow === "reset-request" ? "Отправить код" : flow === "verify" ? "Подтвердить почту" : "Сохранить новый пароль"}</button>
+          <input id="hardio-recovery-email" className="hardio-input hardio-input-plain" type="email" autoComplete="email" maxLength={254} required value={emailOrLogin} onChange={(e) => setEmailOrLogin(e.target.value)} />
+          {flow === "verify" && <><label className="hardio-field-label" htmlFor="hardio-code">Код из письма</label><input id="hardio-code" className="hardio-input hardio-input-plain" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={otp} onChange={(e) => setOtp(e.target.value)} /></>}
+          <button className="hardio-button-primary" disabled={busy} type="submit">{busy ? "Подожди…" : flow === "reset-request" ? "Отправить ссылку" : "Подтвердить почту"}</button>
           {flow === "verify" && <button type="button" className="text-button" disabled={busy} onClick={() => void resendVerification()}>Отправить код повторно</button>}
           <button type="button" className="text-button" disabled={busy} onClick={() => { setFlow("auth"); setPassword(""); setOtp(""); setError(""); setNotice(""); }}>Назад</button>
         </form> : <form className="hardio-form" onSubmit={handleSubmit}>
@@ -183,7 +186,7 @@ export function HardioAuthCard({ mode }: { mode: "register" | "sign-in" }) {
 
           <div className="hardio-field">
             <label htmlFor="hardio-email" className="hardio-field-label">
-              {isRegister ? "Email" : "Email или Логин"}
+              Электронная почта
             </label>
             <div className="hardio-input-wrapper">
               <span className="hardio-input-icon">
@@ -191,9 +194,9 @@ export function HardioAuthCard({ mode }: { mode: "register" | "sign-in" }) {
               </span>
               <input
                 id="hardio-email"
-                autoComplete={isRegister ? "email" : "username"}
+                autoComplete="email"
                 maxLength={254}
-                type={isRegister ? "email" : "text"}
+                type="email"
                 className="hardio-input"
                 placeholder="name@example.com"
                 value={emailOrLogin}
@@ -204,7 +207,7 @@ export function HardioAuthCard({ mode }: { mode: "register" | "sign-in" }) {
           </div>
 
           <div className="hardio-field">
-            <label htmlFor="hardio-password" className="hardio-field-label">Пароль</label>
+            <label htmlFor="hardio-password" className="hardio-field-label">{isRegister ? "Придумай пароль" : "Пароль"}</label>
             <div className="hardio-input-wrapper">
               <span className="hardio-input-icon">
                 <KeyIcon />
@@ -213,7 +216,7 @@ export function HardioAuthCard({ mode }: { mode: "register" | "sign-in" }) {
                 id="hardio-password"
                 autoComplete={isRegister ? "new-password" : "current-password"}
                 maxLength={128}
-                type="password"
+                type={showPassword ? "text" : "password"}
                 className="hardio-input"
                 placeholder={isRegister ? "Минимум 12 символов" : "••••••••"}
                 value={password}
@@ -222,13 +225,20 @@ export function HardioAuthCard({ mode }: { mode: "register" | "sign-in" }) {
                 required
               />
             </div>
+            {isRegister && <small className="hardio-password-help">Не менее 12 символов. Используй уникальный пароль.</small>}
+            <button type="button" className="hardio-password-toggle" aria-controls="hardio-password" aria-pressed={showPassword} onClick={() => setShowPassword((visible) => !visible)}>{showPassword ? "Скрыть пароль" : "Показать пароль"}</button>
           </div>
+
+          {isRegister && <div className="hardio-field">
+            <label htmlFor="hardio-confirm-password" className="hardio-field-label">Повтори пароль</label>
+            <input id="hardio-confirm-password" type={showPassword ? "text" : "password"} className="hardio-input hardio-input-plain" autoComplete="new-password" minLength={12} maxLength={128} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+          </div>}
 
           <button type="submit" className="hardio-button-primary" disabled={busy}>
             {isRegister ? (
               <>
                 <AddUserIcon />
-                <span>{busy ? "Регистрируем…" : "Зарегистрироваться"}</span>
+                <span>{busy ? "Создаём аккаунт…" : "Создать аккаунт"}</span>
               </>
             ) : (
               <>
