@@ -14,6 +14,18 @@ export const learningCourses: LearningCourse[] = [
         { id: "words-1", title: "Вещи вокруг нас", duration: "4 мин", task: { prompt: "Как переводится «book»?", options: ["Стол", "Книга", "Дверь"], answer: "Книга", explanation: "Book означает «книга»." } },
         { id: "words-2", title: "Цвета и предметы", duration: "4 мин", task: { prompt: "Что означает слово «blue»?", options: ["Зелёный", "Синий", "Красный"], answer: "Синий", explanation: "Blue — синий или голубой цвет." } },
       ] },
+      { id: "english-numbers-time", title: "Числа и время", description: "Считаем и называем целый час.", icon: "◷", lessons: [
+        { id: "english-numbers-1", title: "Числа от одного до пяти", duration: "6 мин", skillOutcome: "Узнаю числа от одного до пяти.", task: { prompt: "Как по-английски три?", options: ["three", "two", "five"], answer: "three", explanation: "Three — три." } },
+        { id: "english-time-1", title: "Который час?", duration: "6 мин", skillOutcome: "Спрашиваю и называю целый час.", task: { prompt: "Как спросить время?", options: ["What time is it?", "What is your name?", "Where is it?"], answer: "What time is it?", explanation: "What time is it? — Который час?" } },
+      ] },
+      { id: "english-daily-plans", title: "Распорядок и планы", description: "Рассказываем о привычном дне и простом плане.", icon: "☼", lessons: [
+        { id: "english-routine-1", title: "Мой обычный день", duration: "6 мин", skillOutcome: "Описываю простое регулярное действие.", task: { prompt: "Что означает I work every day?", options: ["Я работаю каждый день", "Я работал вчера", "Я буду работать завтра"], answer: "Я работаю каждый день", explanation: "Every day обозначает регулярное действие." } },
+        { id: "english-plans-1", title: "План на завтра", duration: "6 мин", skillOutcome: "Говорю о простом намерении.", task: { prompt: "Что означает tomorrow?", options: ["Завтра", "Вчера", "Сейчас"], answer: "Завтра", explanation: "Tomorrow означает завтра." } },
+      ] },
+    ],
+    levels: [
+      { id: "english-a1", number: 1, title: "A1 · Основы", description: "Знакомство, первые слова, числа и время.", topicIds: ["hello", "first-words", "english-numbers-time"] },
+      { id: "english-a2", number: 2, title: "A2 · Повседневное общение", description: "Привычные действия и простые планы.", topicIds: ["english-daily-plans"] },
     ],
   },
   {
@@ -27,6 +39,10 @@ export const learningCourses: LearningCourse[] = [
         { id: "web-3", title: "Ссылки и изображения", duration: "6 мин", task: { prompt: "Какой тег создаёт ссылку?", options: ["<a>", "<div>", "<h2>"], answer: "<a>", explanation: "Тег a создаёт ссылку, а её адрес задаётся через href." } },
         { id: "web-4", title: "Добавляем стили", duration: "5 мин", task: { prompt: "Какое CSS-свойство меняет цвет текста?", options: ["color", "size", "font"], answer: "color", explanation: "CSS-свойство color задаёт цвет текста." } },
       ] },
+      { id: "web-css-basics", title: "Основы CSS", description: "Связываем стили со страницей и выбираем элементы.", icon: "▤", lessons: [
+        { id: "web-css-1", title: "Селектор и правило", duration: "6 мин", skillOutcome: "Читаю простое CSS-правило.", task: { prompt: "Что выбирает селектор p?", options: ["Абзацы", "Все изображения", "Только заголовки"], answer: "Абзацы", explanation: "Селектор p выбирает элементы p." } },
+        { id: "web-css-2", title: "Классы и подключение", duration: "6 мин", skillOutcome: "Использую класс и подключаю CSS.", task: { prompt: "Как записывается селектор класса note?", options: [".note", "#note", "note()"], answer: ".note", explanation: "Точка обозначает селектор класса." } },
+      ] },
     ],
   },
   {
@@ -39,6 +55,10 @@ export const learningCourses: LearningCourse[] = [
       { id: "patterns", title: "Замечаем закономерности", description: "Ищем правила в числах и повседневной логике.", icon: "⌁", lessons: [
         { id: "math-3", title: "Продолжи ряд", duration: "4 мин", task: { prompt: "Какое число продолжит ряд: 2, 4, 6, …?", options: ["7", "8", "10"], answer: "8", explanation: "Каждый раз прибавляем 2, поэтому после 6 идёт 8." } },
         { id: "math-4", title: "Логика на каждый день", duration: "5 мин", task: { prompt: "Все чашки стоят на полке. Синяя чашка — одна из них. Где она?", options: ["На полке", "Под столом", "Мы не знаем"], answer: "На полке", explanation: "Синяя чашка входит в множество чашек на полке." } },
+      ] },
+      { id: "math-fractions", title: "Знакомство с дробями", description: "Читаем дроби и сравниваем части целого.", icon: "◒", lessons: [
+        { id: "math-fraction-1", title: "Часть целого", duration: "6 мин", skillOutcome: "Читаю простые дроби.", task: { prompt: "Что означает 1/2?", options: ["Одна из двух равных частей", "Две из одной части", "Два целых"], answer: "Одна из двух равных частей", explanation: "1/2 — одна из двух равных частей целого." } },
+        { id: "math-fraction-2", title: "Сравниваем дроби", duration: "6 мин", skillOutcome: "Сравниваю дроби с одинаковым знаменателем.", task: { prompt: "Какая дробь больше?", options: ["3/4", "1/4", "Они равны"], answer: "3/4", explanation: "Три четверти больше одной четверти." } },
       ] },
     ],
   },

@@ -36,12 +36,12 @@ html[data-reduce-motion="true"] .node-next .node-orbit{animation:none!important}
 .map-course-level>header p{grid-column:1;margin:0;color:#898391;font-size:.7rem;line-height:1.5}
 .map-course-level>header small{grid-column:2;grid-row:1/4;color:#817b8b;font-size:.65rem;text-align:right}
 .map-course-level .world-chapters{padding:2px 0 4px;border:0}
-.map-course-level .world-chapters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 26px;padding:12px 8px}
+.map-course-level .world-chapters{display:grid;grid-template-columns:minmax(0,1fr);gap:0;padding:8px 0}
 .map-course-level .journey-chapter{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0;padding:0 0 8px}
 .map-course-level .journey-chapter:nth-child(n+2){border-top:1px dashed #e9e4ed}
-.map-course-level .journey-path{position:relative;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;width:100%;min-height:164px;margin:0;padding:0}
-.map-course-level .journey-path::before{position:absolute;top:43px;left:50%;z-index:0;width:calc(200% + 26px);height:3px;border:0;border-radius:3px;background:color-mix(in srgb,var(--course-accent) 28%,var(--line));content:""}
-.map-course-level .journey-chapter:nth-child(even) .journey-path::before,.map-course-level .journey-chapter:last-child .journey-path::before{display:none}
+.map-course-level .journey-path{position:relative;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;width:100%;min-height:0;margin:0;padding:4px 0 10px}
+.map-course-level .journey-path::before{display:none}
+.map-course-level .journey-chapter:not(:last-child)::after{position:absolute;bottom:-4px;left:50%;z-index:0;width:2px;height:24px;background:color-mix(in srgb,var(--course-accent) 28%,var(--line));content:""}
 .map-course-level .journey-node.topic-node{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;min-height:0;margin:0;padding:0 8px;border:0;border-radius:0;background:transparent;color:var(--ink,#302b3b);text-align:center;cursor:pointer}
 .topic-node .node-orbit{position:relative;display:grid;place-items:center;width:88px;height:88px;flex:none;padding:6px;border:0;border-radius:50%;background:conic-gradient(var(--course-accent) var(--topic-progress),color-mix(in srgb,var(--line) 78%,var(--surface)) 0);color:var(--course-accent);font-size:1.25rem;transition:transform .2s ease}
 .topic-node:hover .node-orbit{transform:translateY(-2px)}

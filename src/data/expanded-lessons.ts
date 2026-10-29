@@ -12,6 +12,78 @@ export type ExpandedLesson = { level: number; introduction: string[]; example: s
 
 /** Each exercise is authored for the lesson; no generic filler questions are generated. */
 export const expandedLessons: Record<string, ExpandedLesson> = {
+  "web-css-1": { level:1, introduction:["CSS-правило связывает селектор и объявления. Селектор p выбирает абзацы, а в фигурных скобках записывают свойства и значения.", "В записи color: blue свойство color задаёт цвет текста, значение blue означает синий. Объявление обычно заканчивают точкой с запятой."], example:"p { color: blue; }", tasks:[
+    {type:"choice",prompt:"Что выбирает селектор p?",options:["Абзацы","Только картинки","Файлы"],answer:"Абзацы",hint:"В HTML абзац обозначают p.",explanation:"Селектор p выбирает элементы p."},
+    {type:"text",prompt:"Вставь свойство: p { ___: blue; }",answer:"color",hint:"Оно задаёт цвет текста.",explanation:"Свойство color задаёт цвет текста."},
+    {type:"order",prompt:"Собери правило CSS.",options:["}","p", "{", "color: blue;"],answer:["p","{","color: blue;","}"],hint:"Сначала селектор и открывающая скобка.",explanation:"Получается p { color: blue; }."},
+    {type:"choice",prompt:"Что означает blue в color: blue?",options:["Значение цвета","Селектор","Название HTML-тега"],answer:"Значение цвета",hint:"Оно стоит после двоеточия.",explanation:"Blue — значение свойства color."},
+    {type:"text",prompt:"Какой знак разделяет свойство и значение?",answer:":",hint:"Это двоеточие.",explanation:"Между свойством и значением ставят двоеточие."},
+    {type:"choice",prompt:"Какое правило сделает текст абзацев синим?",options:["p { color: blue; }","p { blue: color; }","<p>blue</p>"],answer:"p { color: blue; }",hint:"Используй color: blue внутри скобок.",explanation:"Селектор p выбирает абзацы, color задаёт цвет текста."},
+  ] },
+  "web-css-2": { level:1, introduction:["Класс в HTML помогает выбрать группу элементов: <p class=\"note\">Текст</p>. В CSS селектор класса начинается с точки: .note.", "Внешнюю таблицу стилей обычно подключают в head страницы с помощью link: <link rel=\"stylesheet\" href=\"style.css\">. Путь href должен вести к существующему файлу."], example:".note { color: green; }", tasks:[
+    {type:"choice",prompt:"Как записать селектор класса note?",options:[".note","#note","note()"],answer:".note",hint:"Перед именем класса ставится точка.",explanation:".note выбирает элементы с классом note."},
+    {type:"text",prompt:"Вставь имя атрибута: <p ___=\"note\">Текст</p>",answer:"class",hint:"Атрибут задаёт класс.",explanation:"Атрибут class задаёт класс элемента."},
+    {type:"order",prompt:"Собери CSS-правило для класса.",options:["}",".note","{","color: green;"],answer:[".note","{","color: green;","}"],hint:"Начни с .note.",explanation:".note { color: green; } задаёт цвет текста элементов класса."},
+    {type:"choice",prompt:"Какой тег подключает внешний CSS?",options:["link","img","p"],answer:"link",hint:"У него есть rel и href.",explanation:"link с rel=stylesheet подключает таблицу стилей."},
+    {type:"text",prompt:"Какой атрибут link задаёт путь к файлу?",answer:"href",hint:"Такой же атрибут у ссылки a.",explanation:"В href указывают путь к файлу стилей."},
+    {type:"choice",prompt:"Стиль не появился. Что проверить сначала?",options:["Путь href и имя файла","Только цвет картинки","Название браузера"],answer:"Путь href и имя файла",hint:"Файл должен находиться по указанному пути.",explanation:"Проверь соответствие href и расположения файла."},
+  ] },
+  "math-fraction-1": { level:1, introduction:["Дробь показывает часть целого, разделённого на равные части. В записи 1/2 знаменатель 2 показывает количество равных частей, числитель 1 — сколько частей взяли.", "В дроби 3/4 целое разделено на четыре равные части и взяты три. Части должны быть равными: иначе обычная запись дроби не описывает долю целого."], example:"1/2 пиццы — одна из двух равных половин.", tasks:[
+    {type:"choice",prompt:"Что означает 1/2?",options:["Одна из двух равных частей","Две из одной части","Два целых"],answer:"Одна из двух равных частей",hint:"Знаменатель показывает число равных частей.",explanation:"1/2 — одна из двух равных частей."},
+    {type:"text",prompt:"На сколько равных частей разделено целое в дроби 3/4?",answer:"4",accepted:["4","четыре"],hint:"Посмотри на знаменатель.",explanation:"Знаменатель 4 обозначает четыре равные части."},
+    {type:"choice",prompt:"Сколько частей взяли в 3/4?",options:["3","4","7"],answer:"3",hint:"Посмотри на числитель.",explanation:"Числитель 3 показывает три взятые части."},
+    {type:"order",prompt:"Расположи шаги для понимания дроби.",options:["Определить взятые части","Разделить целое на равные части"],answer:["Разделить целое на равные части","Определить взятые части"],hint:"Сначала целое разделяют.",explanation:"Сначала определяют равные части, затем число взятых."},
+    {type:"choice",prompt:"Пирог разделён на четыре равные части, взяли одну. Какая доля взята?",options:["1/4","4/1","1/2"],answer:"1/4",hint:"Одна часть из четырёх.",explanation:"Одна из четырёх частей — 1/4."},
+    {type:"text",prompt:"Запиши дробь: две равные части из пяти.",answer:"2/5",hint:"Сначала число взятых частей.",explanation:"Две из пяти равных частей записывают 2/5."},
+  ] },
+  "math-fraction-2": { level:1, introduction:["Если знаменатели одинаковые, части имеют одинаковый размер. Больше та дробь, у которой больше числитель: 3/4 больше 1/4.", "Если числители и знаменатели одинаковы, дроби равны. Это правило сравнения применяется к положительным дробям с одинаковым знаменателем."], example:"2/5 < 4/5: две одинаковые пятые части меньше четырёх.", tasks:[
+    {type:"choice",prompt:"Какая дробь больше?",options:["3/4","1/4","Они равны"],answer:"3/4",hint:"Сравни числители.",explanation:"При одинаковых знаменателях 3/4 больше 1/4."},
+    {type:"text",prompt:"Вставь знак: 2/5 ___ 4/5.",answer:"<",hint:"Две части меньше четырёх.",explanation:"2/5 меньше 4/5."},
+    {type:"order",prompt:"Расположи дроби от меньшей к большей.",options:["4/5","1/5","3/5"],answer:["1/5","3/5","4/5"],hint:"Знаменатели одинаковы; сравни числители.",explanation:"1 меньше 3, а 3 меньше 4."},
+    {type:"choice",prompt:"Равны ли 2/3 и 2/3?",options:["Да","Нет, первая больше","Нет, вторая больше"],answer:"Да",hint:"Сравни обе записи.",explanation:"Числители и знаменатели совпадают."},
+    {type:"text",prompt:"Какая дробь больше: 1/6 или 5/6? Напиши дробь.",answer:"5/6",hint:"Пять одинаковых шестых больше одной.",explanation:"5/6 больше 1/6."},
+    {type:"choice",prompt:"У Ани 2/8 пирога, у Бека 3/8 такого же пирога. У кого больше?",options:["У Бека","У Ани","Поровну"],answer:"У Бека",hint:"Сравни 2/8 и 3/8.",explanation:"3/8 больше 2/8 при одинаковых размерах пирога."},
+  ] },
+  "english-numbers-1": {
+    level: 1, introduction: ["Числа one, two, three, four, five означают один, два, три, четыре, пять. Их можно использовать, когда считаешь предметы.", "После числа больше одного к существительному часто добавляется окончание -s: one book, two books. В этом уроке используются обычные формы без исключений."], example: "One book, three books. — Одна книга, три книги.", tasks: [
+      {type:"choice",prompt:"Как сказать «три»?",options:["three","two","five"],answer:"three",hint:"Слово начинается с th.",explanation:"Three означает три."},
+      {type:"text",prompt:"Напиши по-английски число «два».",answer:"two",hint:"Начинается с t.",explanation:"Two означает два."},
+      {type:"order",prompt:"Расположи числа от меньшего к большему.",options:["five","one","three"],answer:["one","three","five"],hint:"Начни с одного.",explanation:"One — один, three — три, five — пять."},
+      {type:"choice",prompt:"Как сказать «четыре книги»?",options:["four books","one book","five books"],answer:"four books",hint:"Четыре — four.",explanation:"Four books — четыре книги."},
+      {type:"text",prompt:"Вставь число: one, two, ___, four.",answer:"three",hint:"Это число после двух.",explanation:"После two идёт three."},
+      {type:"choice",prompt:"Ты видишь пять ручек. Как их назвать?",options:["five pens","two pens","one pen"],answer:"five pens",hint:"Пять — five.",explanation:"Five pens — пять ручек."},
+    ],
+  },
+  "english-time-1": {
+    level: 1, introduction: ["Чтобы спросить время, скажи What time is it? — «Который час?». Для целого часа можно ответить It's three o'clock — «Три часа».", "O'clock используется, когда минут нет. Названия чисел one, two, three, four и five помогут назвать часы от одного до пяти."], example: "What time is it? — It's five o'clock. — Пять часов.", tasks: [
+      {type:"choice",prompt:"Как спросить «Который час?»",options:["What time is it?","What is your name?","Where is the book?"],answer:"What time is it?",hint:"В вопросе есть слово time.",explanation:"What time is it? — вопрос о времени."},
+      {type:"text",prompt:"Вставь число: It's ___ o'clock. — Два часа.",answer:"two",hint:"Два — two.",explanation:"It's two o'clock — два часа."},
+      {type:"order",prompt:"Собери ответ «Три часа».",options:["o'clock","three","It's"],answer:["It's","three","o'clock"],hint:"Начни с It's.",explanation:"It's three o'clock — три часа."},
+      {type:"choice",prompt:"Что означает It's five o'clock?",options:["Пять часов","Три часа","Пять книг"],answer:"Пять часов",hint:"Five — пять, o'clock указывает целый час.",explanation:"Это пять часов ровно."},
+      {type:"text",prompt:"Впиши пропущенное слово: What ___ is it?",answer:"time",hint:"Оно означает «время».",explanation:"What time is it? — который час?"},
+      {type:"choice",prompt:"На часах 4:00. Как ответить?",options:["It's four o'clock.","It's one o'clock.","It's a book."],answer:"It's four o'clock.",hint:"Четыре — four.",explanation:"Для 4:00 подходит It's four o'clock."},
+    ],
+  },
+  "english-routine-1": {
+    level: 2, introduction: ["Present Simple помогает говорить о привычных действиях: I work every day — я работаю каждый день; I study in the evening — я учусь вечером.", "Для I используем начальную форму глагола: I work, I study. Выражения every day и in the evening показывают, как часто или когда происходит действие."], example: "I study in the evening. — Я учусь вечером.", tasks: [
+      {type:"choice",prompt:"Что означает every day?",options:["каждый день","вчера","завтра"],answer:"каждый день",hint:"Речь о повторяющемся действии.",explanation:"Every day — каждый день."},
+      {type:"text",prompt:"Впиши study: I ___ in the evening.",answer:"study",hint:"Слово означает «учиться».",explanation:"I study in the evening — я учусь вечером."},
+      {type:"order",prompt:"Собери «Я работаю каждый день».",options:["every day","work","I"],answer:["I","work","every day"],hint:"Начни с I.",explanation:"I work every day описывает регулярное действие."},
+      {type:"choice",prompt:"Что означает I study in the evening?",options:["Я учусь вечером","Я работаю утром","Я учился вчера"],answer:"Я учусь вечером",hint:"Study — учиться, evening — вечер.",explanation:"Фраза описывает привычку учиться вечером."},
+      {type:"text",prompt:"Вставь слово: I work every ___.",answer:"day",hint:"Every day — каждый день.",explanation:"Словосочетание every day означает «каждый день»."},
+      {type:"choice",prompt:"Ты регулярно учишься вечером. Какая фраза подходит?",options:["I study in the evening.","I studied yesterday.","It's five o'clock."],answer:"I study in the evening.",hint:"Используй I study для привычки.",explanation:"I study in the evening описывает обычное действие."},
+    ],
+  },
+  "english-plans-1": {
+    level: 2, introduction: ["Для простого намерения можно использовать I am going to + глагол. Например, I am going to study — «Я собираюсь учиться».", "Tomorrow означает «завтра». I am часто сокращают до I'm: I'm going to study tomorrow и I am going to study tomorrow означают одно и то же."], example: "I'm going to study tomorrow. — Я собираюсь учиться завтра.", tasks: [
+      {type:"choice",prompt:"Что означает tomorrow?",options:["завтра","вчера","каждый день"],answer:"завтра",hint:"Это следующий день.",explanation:"Tomorrow — завтра."},
+      {type:"text",prompt:"Вставь слово: I am going ___ study.",answer:"to",hint:"Оно стоит перед глаголом.",explanation:"После going здесь используется to и глагол."},
+      {type:"order",prompt:"Собери фразу «Я собираюсь учиться завтра».",options:["tomorrow","study","going to","I'm"],answer:["I'm","going to","study","tomorrow"],hint:"Начни с I'm.",explanation:"I'm going to study tomorrow описывает намерение."},
+      {type:"choice",prompt:"Какая фраза описывает план?",options:["I'm going to study tomorrow.","I study every day.","It's three o'clock."],answer:"I'm going to study tomorrow.",hint:"Найди going to и tomorrow.",explanation:"Going to с глаголом выражает намерение."},
+      {type:"text",prompt:"Вставь английское слово для «завтра»: I'm going to work ___.",answer:"tomorrow",hint:"Начинается с t.",explanation:"Tomorrow означает завтра."},
+      {type:"choice",prompt:"Что означает I'm going to work tomorrow?",options:["Я собираюсь работать завтра","Я работаю каждый день","Я работал вчера"],answer:"Я собираюсь работать завтра",hint:"Going to выражает намерение.",explanation:"Фраза говорит о плане работать завтра."},
+    ],
+  },
   "ict-device-concept": {
     level: 1,
     introduction: ["Компьютер получает данные с устройств ввода, обрабатывает их и передаёт результат устройствам вывода. Например, клавиатура вводит текст, микрофон записывает звук, а камера передаёт изображение.", "Монитор показывает изображение, колонки воспроизводят звук, а принтер выводит информацию на бумагу. Для видеозвонка камера и микрофон передают собеседнику изображение и голос; чтобы услышать его, нужны наушники или колонки.", "Одно устройство может выполнять несколько функций: сенсорный экран показывает картинку и принимает прикосновения. Выбирай устройства по задаче, а не по названию."],
