@@ -33,6 +33,8 @@ export function PasswordSignIn() {
   const [secure, setSecure] = useState(false);
   const [signup, setSignup] = useState(false);
   const [email, setEmail] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [showRecovery, setShowRecovery] = useState(false);
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -40,19 +42,21 @@ export function PasswordSignIn() {
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setBusy(true); setError("");
     try {
-      await accountRequest(signup ? "/api/auth/sign-up/email" : "/api/auth/sign-in/email", { method: "POST", body: JSON.stringify({ email, password }) });
+      const byUsername = !signup && !email.includes("@");
+      await accountRequest(signup ? "/api/auth/sign-up/email" : byUsername ? "/api/auth/sign-in/username" : "/api/auth/sign-in/email", { method: "POST", body: JSON.stringify(byUsername ? { username: email, password } : { email, password, ...(signup ? { username: nickname } : {}) }) });
       setPassword(""); await refresh(); window.location.assign("/profile");
     } catch (e) { setError(e instanceof Error ? e.message : "Не удалось выполнить действие."); setPassword(""); }
     finally { setBusy(false); }
   };
   if (!secure || !passwordConfigured) return <p className="account-note">Вход по паролю пока не настроен. Для безопасного входа необходим HTTPS. Гостевое обучение доступно.</p>;
   return <form className="pin-form" onSubmit={(event) => void submit(event)}>
-    <label>Электронная почта<input type="email" autoComplete="email" maxLength={254} required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
+    {signup && <label>Ник пользователя<input type="text" autoComplete="username" minLength={3} maxLength={30} pattern="[A-Za-z0-9_]{3,30}" required value={nickname} onChange={(event) => setNickname(event.target.value)} /><small>От 3 до 30 латинских букв, цифр или знак подчёркивания.</small></label>}
+    <label>{signup ? "Электронная почта" : "Электронная почта или ник"}<input type={signup ? "email" : "text"} autoComplete={signup ? "email" : "username"} maxLength={254} required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
     <label>Пароль KiraQuest<input type="password" autoComplete={signup ? "new-password" : "current-password"} minLength={12} maxLength={128} required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
     <p className="account-note">Используй отдельный пароль KiraQuest длиной от 12 символов. Пароль от почтового ящика вводить не нужно.</p>
     {error && <p className="account-error" role="alert">{error}</p>}
-    <div className="account-actions"><button className="button button-primary" disabled={busy} type="submit">{busy ? "Подожди…" : signup ? "Создать аккаунт" : "Войти"}</button><button type="button" className="text-button" disabled={busy} onClick={() => { setSignup(!signup); setPassword(""); setError(""); }}>{signup ? "Уже есть аккаунт? Войти" : "Создать аккаунт"}</button></div>
-    <p className="account-note">Восстановление пароля по почте пока не настроено. Сохрани пароль в менеджере паролей.</p>
+    <div className="account-actions"><button className="button button-primary" disabled={busy} type="submit">{busy ? "Подожди…" : signup ? "Зарегистрироваться" : "Войти"}</button><button type="button" className="text-button" disabled={busy} onClick={() => { setSignup(!signup); setPassword(""); setError(""); setShowRecovery(false); }}>{signup ? "Уже есть аккаунт? Войти" : "Зарегистрироваться"}</button>{!signup && <button type="button" className="text-button" onClick={() => setShowRecovery(!showRecovery)} aria-expanded={showRecovery}>Забыли пароль?</button>}</div>
+    {showRecovery && <p className="account-note" role="status">Восстановление пароля по почте пока не настроено. Сохрани пароль в менеджере паролей.</p>}
   </form>;
 }
 

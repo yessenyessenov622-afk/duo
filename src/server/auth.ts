@@ -3,7 +3,7 @@ import "server-only";
 import { isIP } from "node:net";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
-import { emailOTP } from "better-auth/plugins";
+import { emailOTP, username } from "better-auth/plugins";
 import { createHmac } from "node:crypto";
 import { deliverOtpMail, otpMailConfiguration, type OtpMailConfig } from "./otp-mail";
 import type { Pool } from "pg";
@@ -78,11 +78,12 @@ export function createAuth(config: AuthConfiguration, database: Pool, sendOtp = 
       storage: "database",
       window: 60,
       max: 100,
-      customRules: { "/sign-in/social": { window: 60, max: 10 }, "/sign-in/email": { window: 60, max: 5 }, "/sign-up/email": { window: 60, max: 5 } },
+      customRules: { "/sign-in/social": { window: 60, max: 10 }, "/sign-in/email": { window: 60, max: 5 }, "/sign-in/username": { window: 60, max: 5 }, "/sign-up/email": { window: 60, max: 5 } },
     },
     telemetry: { enabled: false },
     logger: { disabled: true },
     plugins: [
+      username({ minUsernameLength: 3, maxUsernameLength: 30, displayUsername: false, immutableUsername: true, usernameValidator: (value) => /^[a-zA-Z0-9_]+$/.test(value) }),
       ...(config.mail ? [emailOTP({
         otpLength: 6, expiresIn: 300, allowedAttempts: 5,
         storeOTP: { hash: async (otp) => createHmac("sha256", config.secret).update(`kiraquest-email-otp:${otp}`).digest("hex") },

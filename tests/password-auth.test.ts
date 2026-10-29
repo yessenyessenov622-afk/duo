@@ -24,7 +24,7 @@ test("password registration uses a hash, keeps email unverified and supports sig
   const post = (path: string, body: object, cookie = "") => auth.handler(new Request(`${origin}/api/auth/${path}`, { method: "POST", headers: { origin, "content-type": "application/json", "x-real-ip": "192.0.2.42", ...(cookie ? { cookie } : {}) }, body: JSON.stringify(body) }));
   const email = "student@example.org"; const password = "test-password-12345";
   try {
-    const signup = await post("sign-up/email", { email, password, name: "Student" });
+    const signup = await post("sign-up/email", { email, password, name: "Student", username: "Student_1" });
     assert.equal(signup.status, 200, await signup.clone().text());
     const cookies = signup.headers.getSetCookie().map((value) => value.split(";", 1)[0]).join("; ");
     const identity = await requireSession(new Request(`${origin}/private`, { headers: { cookie: cookies } }), auth);
@@ -35,6 +35,9 @@ test("password registration uses a hash, keeps email unverified and supports sig
     await assert.rejects(requireSession(new Request(`${origin}/private`, { headers: { cookie: cookies } }), auth));
     assert.notEqual((await post("sign-in/email", { email, password: "incorrect-password" })).status, 200);
     assert.equal((await post("sign-in/email", { email, password })).status, 200);
+    assert.equal((await post("sign-in/username", { username: "student_1", password })).status, 200);
+    assert.notEqual((await post("sign-in/username", { username: "student_1", password: "incorrect-password" })).status, 200);
+    assert.notEqual((await post("sign-up/email", { email: "other@example.org", password, name: "Other", username: "STUDENT_1" })).status, 200);
     assert.notEqual((await post("sign-up/email", { email, password, name: "Other" })).status, 200);
     assert.equal((await pool.query('SELECT id FROM "user"')).rows.length, 1);
   } finally { await pool.end(); }
