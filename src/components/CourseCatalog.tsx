@@ -13,9 +13,10 @@ export function CourseCatalog() {
   const { settings } = useCustomization();
   const [showAll, setShowAll] = useState(false);
   const focus = learningCourses.filter((course) => FOCUS_COURSE_IDS.some((id) => id === course.id));
-  const courses = showAll ? [...focus, ...learningCourses.filter((course) => !FOCUS_COURSE_IDS.some((id) => id === course.id))] : focus;
+  const lifeSkills = learningCourses.filter((course) => course.category === "Жизненные навыки");
+  const courses = [...focus, ...lifeSkills, ...(showAll ? learningCourses.filter((course) => !FOCUS_COURSE_IDS.some((id) => id === course.id) && course.category !== "Жизненные навыки") : [])];
   return <section className="course-catalog" aria-label={settings.visualStyle === "retro-desktop" ? "Библиотека курсов" : "Каталог практических направлений"}>
-    <header><span className="eyebrow">ТВОЙ УЧЕБНЫЙ ПУТЬ</span><h2>Выбери направление</h2><p>Начни с английского, веб-разработки или цифровых навыков. Другие направления остаются доступными.</p><button type="button" className="text-button" aria-expanded={showAll} onClick={() => setShowAll(!showAll)}>{showAll ? "Показать основные направления" : "Показать все направления"}</button></header>
+    <header><span className="eyebrow">ТВОЙ УЧЕБНЫЙ ПУТЬ</span><h2>Выбери направление</h2><p>Начни с английского, веб-разработки, цифровых или жизненных навыков. Другие направления остаются доступными.</p><button type="button" className="text-button" aria-expanded={showAll} onClick={() => setShowAll(!showAll)}>{showAll ? "Показать основные направления" : "Показать все направления"}</button></header>
     <div className="course-catalog-grid">
       {courses.map((course) => {
         const lessons = course.chapters.flatMap((chapter) => chapter.lessons);

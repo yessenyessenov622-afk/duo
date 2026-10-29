@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { expandedLessons } from "../src/data/expanded-lessons";
 import { completeLearningLesson, findLearningLesson, getTopicStatus, learningCourses } from "../src/data/learning-map";
 import { createInitialLearningProgress } from "../src/lib/learning-progress";
+import { lifeSkillsCourses, lifeSkillsLessons } from "../src/data/life-skills";
 
 test("authored lessons match their actual levels and exercise counts", () => {
   for (const [id, content] of Object.entries(expandedLessons)) {
@@ -17,6 +18,25 @@ test("authored lessons match their actual levels and exercise counts", () => {
       if (task.type === "choice") assert.ok(task.options?.includes(task.answer as string), id);
       if (task.type === "order") assert.deepEqual([...(task.options ?? [])].sort(), [...task.answer as string[]].sort(), id);
     }
+  }
+});
+
+test("life skills courses unlock the next topic and preserve the original reward on repeat", () => {
+  assert.equal(lifeSkillsCourses.length, 6);
+  const ids = new Set<string>();
+  for (const course of lifeSkillsCourses) {
+    assert.equal(course.chapters.length, 2);
+    const [first, second] = course.chapters;
+    const lesson = first.lessons[0];
+    assert.equal(ids.has(lesson.id), false); ids.add(lesson.id);
+    assert.equal(lifeSkillsLessons[lesson.id].tasks.length, 6);
+    let progress = createInitialLearningProgress();
+    assert.equal(getTopicStatus(course, second.id, progress.completedLessons, progress.startedCourses), "locked");
+    progress = completeLearningLesson(progress, lesson.id, "2026-01-01")!.progress;
+    assert.equal(getTopicStatus(course, second.id, progress.completedLessons, progress.startedCourses), "next");
+    const repeated = completeLearningLesson(progress, lesson.id, "2026-01-01")!;
+    assert.equal(repeated.awarded, false);
+    assert.equal(repeated.progress.xp, progress.xp);
   }
 });
 

@@ -1,5 +1,6 @@
 import type { LearningCourse, LearningProgress } from "@/src/types/learning";
 import { technicalCourses } from "@/src/data/technical-courses";
+import { lifeSkillsCourses } from "@/src/data/life-skills";
 
 // Демо-задания отражают темы и идентификаторы уроков существующего vanilla-каталога.
 export const learningCourses: LearningCourse[] = [
@@ -78,7 +79,7 @@ export const learningCourses: LearningCourse[] = [
 ];
 
 // Existing course and lesson IDs remain unchanged so saved progress remains valid.
-learningCourses.push(...technicalCourses);
+learningCourses.push(...technicalCourses, ...lifeSkillsCourses);
 
 export const ALL_COURSES_ID = "all-courses";
 export const XP_PER_LESSON = 25;

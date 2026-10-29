@@ -1,17 +1,21 @@
 export type ExpandedTask = {
   prompt: string;
-  type: "choice" | "text" | "order";
+  type: "choice" | "text" | "order" | "budget" | "schedule";
   options?: string[];
   answer: string | string[];
   accepted?: string[];
   hint: string;
   explanation: string;
   code?: string;
+  budget?: { total: number; allocations: { id: string; label: string; minimum: number; initial: number }[] };
+  schedule?: { dayStart: number; dayEnd: number; events: { id: string; title: string; duration: number; initialStart: number; latestEnd?: number }[] };
 };
 export type ExpandedLesson = { level: number; introduction: string[]; example: string; tasks: ExpandedTask[] };
+import { lifeSkillsLessons } from "@/src/data/life-skills";
 
 /** Each exercise is authored for the lesson; no generic filler questions are generated. */
 export const expandedLessons: Record<string, ExpandedLesson> = {
+  ...lifeSkillsLessons,
   "web-css-1": { level:1, introduction:["CSS-правило связывает селектор и объявления. Селектор p выбирает абзацы, а в фигурных скобках записывают свойства и значения.", "В записи color: blue свойство color задаёт цвет текста, значение blue означает синий. Объявление обычно заканчивают точкой с запятой."], example:"p { color: blue; }", tasks:[
     {type:"choice",prompt:"Что выбирает селектор p?",options:["Абзацы","Только картинки","Файлы"],answer:"Абзацы",hint:"В HTML абзац обозначают p.",explanation:"Селектор p выбирает элементы p."},
     {type:"text",prompt:"Вставь свойство: p { ___: blue; }",answer:"color",hint:"Оно задаёт цвет текста.",explanation:"Свойство color задаёт цвет текста."},

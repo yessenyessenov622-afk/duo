@@ -20,6 +20,8 @@ export function ExpandedLessonExperience({ lessonId }: { lessonId: string }) {
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [order, setOrder] = useState<string[]>([]);
+  const [budget, setBudget] = useState<Record<string, number>>({});
+  const [starts, setStarts] = useState<Record<string, number>>({});
   const [checked, setChecked] = useState(false);
   const [correct, setCorrect] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
@@ -31,12 +33,14 @@ export function ExpandedLessonExperience({ lessonId }: { lessonId: string }) {
   const status = statusForLesson(course.id, lessonId, progress);
 
   useEffect(() => { if (ready && !started.current && status !== "locked") { started.current = true; startLesson(lessonId); } }, [ready, status, lessonId, startLesson]);
-  useEffect(() => { setAnswer(""); setOrder(task.options ?? []); setChecked(false); setCorrect(false); setHintOpen(false); }, [index, task]);
+  useEffect(() => { setAnswer(""); setOrder(task.options ?? []); setBudget(Object.fromEntries((task.budget?.allocations ?? []).map((item) => [item.id, item.initial]))); setStarts(Object.fromEntries((task.schedule?.events ?? []).map((item) => [item.id, item.initialStart]))); setChecked(false); setCorrect(false); setHintOpen(false); }, [index, task]);
   useEffect(() => { document.documentElement.dataset.readerMode = String(readerMode); return () => { delete document.documentElement.dataset.readerMode; }; }, [readerMode]);
 
   const check = () => {
     if (checked && correct) return;
-    const isCorrect = task.type === "order"
+    const isCorrect = task.type === "budget" ? !!task.budget && task.budget.allocations.reduce((sum, item) => sum + (budget[item.id] ?? 0), 0) === task.budget.total && task.budget.allocations.every((item) => (budget[item.id] ?? 0) >= item.minimum)
+      : task.type === "schedule" ? !!task.schedule && task.schedule.events.every((event, i, events) => starts[event.id] >= task.schedule!.dayStart && starts[event.id] + event.duration <= (event.latestEnd ?? task.schedule!.dayEnd) && events.slice(i + 1).every((other) => starts[event.id] + event.duration <= starts[other.id] || starts[other.id] + other.duration <= starts[event.id]))
+      : task.type === "order"
       ? order.join("\u001f") === (task.answer as string[]).join("\u001f")
       : task.type === "text"
         ? (task.accepted ?? [task.answer as string]).some((item) => normalizeAnswer(item) === normalizeAnswer(answer))
@@ -73,8 +77,10 @@ export function ExpandedLessonExperience({ lessonId }: { lessonId: string }) {
       {task.type === "choice" && <div className="lesson-answer-options" role="group" aria-label="Варианты ответа">{task.options?.map((option) => <button key={option} type="button" className={`lesson-answer-option${answer === option ? " chosen" : ""}`} aria-pressed={answer === option} disabled={checked && correct} onClick={() => { setAnswer(option); setChecked(false); }}>{option}</button>)}</div>}
       {task.type === "text" && <label className="expanded-answer">Твой ответ<input value={answer} disabled={checked && correct} onChange={(event) => { setAnswer(event.target.value); setChecked(false); }} autoComplete="off" /></label>}
       {task.type === "order" && <fieldset className="mechanic-fieldset"><legend>Порядок частей</legend><ol className="sequence-step-list">{order.map((item, position) => <li key={item}><span className="sequence-position">{position + 1}</span><span className="sequence-step-label">{item}</span><button type="button" disabled={position === 0 || (checked && correct)} aria-label={`Поднять выше: ${item}`} onClick={() => move(position, -1)}>↑</button><button type="button" disabled={position === order.length - 1 || (checked && correct)} aria-label={`Опустить ниже: ${item}`} onClick={() => move(position, 1)}>↓</button></li>)}</ol></fieldset>}
+      {task.type === "budget" && task.budget && <fieldset className="mechanic-fieldset"><legend>Учебный бюджет: {task.budget.total.toLocaleString("ru-RU")} ₸</legend><div className="budget-allocation-list">{task.budget.allocations.map((item) => <label className="budget-allocation-row" key={item.id}><span>{item.label}</span><span className="budget-input-wrap"><input type="number" min="0" step="1000" inputMode="numeric" value={budget[item.id] ?? 0} disabled={checked && correct} aria-label={`${item.label}, тенге`} onChange={(event) => { setBudget((current) => ({ ...current, [item.id]: Math.max(0, Number(event.target.value) || 0) })); setChecked(false); }} /><span>₸</span></span></label>)}</div><output className="budget-balance" aria-live="polite">Остаток: {(task.budget.total - task.budget.allocations.reduce((sum, item) => sum + (budget[item.id] ?? 0), 0)).toLocaleString("ru-RU")} ₸</output></fieldset>}
+      {task.type === "schedule" && task.schedule && <fieldset className="mechanic-fieldset"><legend>Время начала дел</legend><div className="schedule-event-list">{task.schedule.events.map((event) => <label className="schedule-event-row" key={event.id}><span>{event.title}</span><select value={starts[event.id] ?? event.initialStart} disabled={checked && correct} aria-label={`Время начала: ${event.title}`} onChange={(input) => { setStarts((current) => ({ ...current, [event.id]: Number(input.target.value) })); setChecked(false); }}>{Array.from({length: Math.floor((task.schedule!.dayEnd - event.duration - task.schedule!.dayStart) / 30) + 1}, (_, i) => task.schedule!.dayStart + i * 30).map((minute) => <option key={minute} value={minute}>{`${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`}</option>)}</select></label>)}</div></fieldset>}
       {checked && <div className={`lesson-answer-explanation${correct ? " explanation-correct" : " explanation-retry"}`} role="status"><b>{correct ? "Верно!" : "Пока не получилось. Попробуй ещё раз."}</b><p>{task.explanation}</p></div>}
-      <div className="lesson-question-footer"><div><span>Награда начисляется только при первом завершении.</span><button type="button" className="lesson-hint-button" aria-expanded={hintOpen} onClick={() => setHintOpen(!hintOpen)}>{hintOpen ? "Скрыть подсказку" : "Попросить подсказку"}</button>{hintOpen && <p className="lesson-hint-copy">{task.hint}</p>}</div>{checked && correct ? <button type="button" className="button button-dark" onClick={next}>{index === lessonContent.tasks.length - 1 ? "Завершить урок" : "Следующее задание"} →</button> : <button type="button" className="button button-dark" disabled={task.type !== "order" && !answer.trim()} onClick={check}>Проверить ответ →</button>}</div>
+      <div className="lesson-question-footer"><div><span>Награда начисляется только при первом завершении.</span><button type="button" className="lesson-hint-button" aria-expanded={hintOpen} onClick={() => setHintOpen(!hintOpen)}>{hintOpen ? "Скрыть подсказку" : "Попросить подсказку"}</button>{hintOpen && <p className="lesson-hint-copy">{task.hint}</p>}</div>{checked && correct ? <button type="button" className="button button-dark" onClick={next}>{index === lessonContent.tasks.length - 1 ? "Завершить урок" : "Следующее задание"} →</button> : <button type="button" className="button button-dark" disabled={(task.type === "text" || task.type === "choice") && !answer.trim()} onClick={check}>Проверить ответ →</button>}</div>
     </div>
     {status === "completed" && <p className="lesson-repeat-note">Урок уже пройден: повторение не начислит XP повторно.</p>}
   </section>;

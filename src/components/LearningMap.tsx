@@ -8,6 +8,7 @@ import { useLearningProgress } from "@/src/components/LearningProgressProvider";
 import { useAccount } from "@/src/components/AccountProvider";
 import type { LearningChapter, LearningCourse, LessonStatus } from "@/src/types/learning";
 import { englishRoadmap } from "@/src/data/english-roadmap";
+import { lifeSkillsFuture } from "@/src/data/life-skills";
 
 const STATUS_COPY: Record<LessonStatus, { label: string; icon: string }> = {
   completed: { label: "Завершён", icon: "✓" }, next: { label: "Следующий", icon: "→" },
@@ -106,6 +107,7 @@ export function LearningMap() {
             return <section className="map-course-level" key={level.id} aria-label={`Уровень ${level.number}: ${level.title}`}><header><span>УРОВЕНЬ {level.number}</span><h3>{level.title}</h3><p>{level.description}</p><small>{levelDone ? (course.id === "english-start" ? "✓ Готовые темы пройдены" : "✓ Уровень завершён") : `${topics.filter((topic) => topic.lessons.every((lesson) => progress.completedLessons.includes(lesson.id))).length} из ${topics.length} тем`}</small></header><div className="world-chapters">{topics.map((chapter) => <CourseChapter key={chapter.id} course={course} chapter={chapter} completedIds={progress.completedLessons} startedIds={progress.startedCourses} onSelect={openTopic} />)}</div></section>;
           })}
           {course.id === "english-start" && englishRoadmap.slice(2).map((item) => <section className="map-course-level" key={item.level} aria-label={`${item.level}: в разработке`}><header><span>В РАЗРАБОТКЕ</span><h3>{item.level} · {item.title}</h3><p>{item.topics}</p><small>Будущий этап</small></header></section>)}
+          {lifeSkillsFuture[course.id] && <section className="map-course-level"><header><span>В РАЗРАБОТКЕ</span><h3>Следующие темы</h3><p>{lifeSkillsFuture[course.id]}</p><small>Будущий этап</small></header></section>}
         </section>;
       })}</div>
       <section className="map-footer-tools"><div className="map-reward-card"><span className="map-reward-icon" aria-hidden="true">✦</span><div><span className="eyebrow">НАГРАДА ТЕМЫ</span><b>Каждый урок приносит {25} XP</b><small>Тема завершена, когда пройдены все её уроки.</small></div></div><button type="button" className="map-reset-button" onClick={handleReset}>Сбросить демо-прогресс</button></section>
