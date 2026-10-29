@@ -20,7 +20,7 @@ export type AuthConfiguration = { databaseURL: string; baseURL: string; secret: 
 export function authConfiguration(env: Record<string, string | undefined> = process.env): AuthConfiguration | null {
   const { DATABASE_URL, BETTER_AUTH_URL, BETTER_AUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = env;
   const mail = otpMailConfiguration(env);
-  const passwordEnabled = env.KIRAQUEST_PASSWORD_AUTH === "enabled";
+  const passwordEnabled = env.KIRAQUEST_PASSWORD_AUTH === "enabled" && !!mail;
   if (!DATABASE_URL || !BETTER_AUTH_URL || !BETTER_AUTH_SECRET || BETTER_AUTH_SECRET.length < 32 || (!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) && !mail && !passwordEnabled)) return null;
   try {
     const url = new URL(BETTER_AUTH_URL);
@@ -33,6 +33,12 @@ export function authConfiguration(env: Record<string, string | undefined> = proc
 
 export function isAuthConfigured(): boolean { return authConfiguration() !== null; }
 
+/** Resetting a password must not attach a credential to an OAuth-only account. */
+export async function hasPasswordCredential(email: string, database: Pick<Pool, "query"> = getPool()): Promise<boolean> {
+  const result = await database.query('SELECT 1 FROM "user" u JOIN "account" a ON a."userId" = u.id WHERE lower(u.email) = $1 AND a."providerId" = $2 AND a.password IS NOT NULL LIMIT 1', [email.toLowerCase(), "credential"]);
+  return !!result.rowCount;
+}
+
 /** The factory also permits testing the real adapter against an isolated DB. */
 export function createAuth(config: AuthConfiguration, database: Pool, sendOtp = deliverOtpMail) {
   return betterAuth({
@@ -41,7 +47,8 @@ export function createAuth(config: AuthConfiguration, database: Pool, sendOtp = 
     basePath: "/api/auth",
     secret: config.secret,
     database,
-    emailAndPassword: { enabled: config.passwordEnabled === true, minPasswordLength: 12, maxPasswordLength: 128, requireEmailVerification: false },
+    emailAndPassword: { enabled: config.passwordEnabled === true, minPasswordLength: 12, maxPasswordLength: 128, requireEmailVerification: !!config.mail, revokeSessionsOnPasswordReset: true },
+    emailVerification: { sendOnSignUp: !!config.mail && config.passwordEnabled === true, autoSignInAfterVerification: false },
     socialProviders: config.clientId && config.clientSecret ? {
       google: {
         clientId: config.clientId,
@@ -86,9 +93,10 @@ export function createAuth(config: AuthConfiguration, database: Pool, sendOtp = 
       username({ minUsernameLength: 3, maxUsernameLength: 30, displayUsername: false, immutableUsername: true, usernameValidator: (value) => /^[a-zA-Z0-9_]+$/.test(value) }),
       ...(config.mail ? [emailOTP({
         otpLength: 6, expiresIn: 300, allowedAttempts: 5,
+        overrideDefaultEmailVerification: config.passwordEnabled === true,
         storeOTP: { hash: async (otp) => createHmac("sha256", config.secret).update(`kiraquest-email-otp:${otp}`).digest("hex") },
         rateLimit: { window: 60, max: 5 },
-        sendVerificationOTP: async ({ email, otp }) => sendOtp(config.mail!, email, otp),
+        sendVerificationOTP: async ({ email, otp, type }) => sendOtp(config.mail!, email, otp, undefined, type),
       })] : []),
       nextCookies(),
     ],

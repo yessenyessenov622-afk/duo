@@ -2,12 +2,13 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { DEFAULT_SETTINGS, SETTINGS_KEY, normalizeSettings, readSettings, writeSettings } from "@/src/lib/customization";
-import { PROGRESS_STORAGE_KEY, createInitialLearningProgress, readLearningProgress, writeLearningProgress } from "@/src/lib/learning-progress";
+import { createInitialLearningProgress, readLearningProgress, writeLearningProgress } from "@/src/lib/learning-progress";
 import { loadWallpaper } from "@/src/lib/wallpaper-storage";
 import type { CustomizationSettings } from "@/src/types/customization";
 import type { LearningProgress } from "@/src/types/learning";
 import type { AccountData, AccountPreferences, GuestDataImport } from "@/src/types/account";
 import { defaultAccountPreferences } from "@/src/lib/account-data";
+import { guestAlreadyImported, guestImportId, markGuestImported } from "@/src/lib/guest-import";
 
 type User = { id: string; name: string; email: string; image?: string | null; emailVerified?: boolean };
 export type PinStatus = { enabled: boolean; locked: boolean; retryAt: number | null; unlockExpiresAt?: number | null; deviceChanged?: boolean };
@@ -23,7 +24,6 @@ type AccountContextValue = {
   dismissGuest: () => void; pinAction: (action: string, fields?: Record<string, string>) => Promise<void>;
 };
 const AccountContext = createContext<AccountContextValue | null>(null);
-const IMPORT_KEY = "kiraquest.guest-import-id.v1";
 const PREFERENCES_KEY = "kiraquest.guest-preferences.v1";
 const emptyPin: PinStatus = { enabled: false, locked: false, retryAt: null };
 const emptyData = (): AccountData => ({ progress: createInitialLearningProgress(), settings: normalizeSettings(DEFAULT_SETTINGS), revision: 0, preferences: defaultAccountPreferences() });
@@ -62,12 +62,12 @@ function guestData(): { data: AccountData; warning: string } {
   return { data, warning: [progress.warning, settings.warning].filter(Boolean).join(" ") };
 }
 
-function findGuest(): Guest | null {
+function findGuest(userId: string): Guest | null {
   const { data } = guestData();
   try {
     if (!data.progress.completedLessons.length && !data.progress.startedCourses.length && !localStorage.getItem(SETTINGS_KEY)) return null;
-    let importId = localStorage.getItem(IMPORT_KEY);
-    if (!importId) { importId = crypto.randomUUID(); localStorage.setItem(IMPORT_KEY, importId); }
+    if (guestAlreadyImported(localStorage, userId, data)) return null;
+    const importId = guestImportId(localStorage, data, () => crypto.randomUUID());
     return { progress: data.progress, settings: data.settings, preferences: data.preferences, importId };
   } catch { return null; }
 }
@@ -152,7 +152,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       }
       setStatus("ready"); state.current.status = "ready";
       setError("");
-      if (!guestDismissed.current) setGuest((current) => current ?? findGuest());
+      if (!guestDismissed.current) setGuest((current) => current ?? findGuest(session.user!.id));
     } catch (e) {
       if (requestId !== refreshSequence.current) return;
       if (e instanceof RequestError && e.status === 423) {
@@ -315,8 +315,13 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     const imported = await accountRequest<AccountData>("/api/account/import", { method: "POST", body: JSON.stringify({ ...sourceGuest, useGuestSettings }) }, owner);
     if (stamp !== generation.current) throw new Error("Аккаунт изменился во время переноса. Исходные данные не удалены.");
     setData(imported); state.current.data = imported;
-    if (!source) {
-      try { localStorage.removeItem(PROGRESS_STORAGE_KEY); localStorage.removeItem(SETTINGS_KEY); localStorage.removeItem(IMPORT_KEY); } catch { /* Server records the import ID, so retry cannot duplicate rewards. */ }
+    if (!source && guest) {
+      // Keep the original guest data: another tab may have changed it while
+      // the request was in flight. Suppress the prompt only for the exact
+      // snapshot imported by this account; changed data can be imported later.
+      try {
+        if (owner) markGuestImported(localStorage, owner, guest, guest.importId);
+      } catch { /* The server's import ID still makes retries idempotent. */ }
       setGuest(null); guestDismissed.current = true;
     }
     setSyncStatus("saved");

@@ -57,7 +57,7 @@ export function PasswordSignIn({ mode = "sign-in" }: { mode?: "sign-in" | "sign-
     <p className="account-note">Используй отдельный пароль KiraQuest длиной от 12 символов. Пароль от почтового ящика вводить не нужно.</p>
     {error && <p className="account-error" role="alert">{error}</p>}
     <div className="account-actions"><button className="button button-primary" disabled={busy} type="submit">{busy ? "Подожди…" : signup ? "Зарегистрироваться" : "Войти"}</button><Link className="text-button" href={signup ? "/sign-in" : "/register"}>{signup ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Зарегистрироваться"}</Link>{!signup && <button type="button" className="text-button" onClick={() => setShowRecovery(!showRecovery)} aria-expanded={showRecovery}>Забыли пароль?</button>}</div>
-    {showRecovery && <p className="account-note" role="status">Восстановление пароля по почте пока не настроено. Сохрани пароль в менеджере паролей.</p>}
+    {showRecovery && <p className="account-note" role="status">Восстановить пароль можно на <Link href="/sign-in">странице входа</Link> через код, отправленный на почту.</p>}
   </form>;
 }
 
@@ -183,5 +183,5 @@ export function SignInScreen() {
 export function RegisterScreen() {
   const account = useAccount();
   if (account.user) return <section className="account-card sign-in-card"><span className="eyebrow">ТВОЙ АККАУНТ</span><h1>Ты уже вошёл в KiraQuest</h1><p>Продолжай обучение или открой сохранённый профиль.</p><Link className="button button-primary" href="/profile">Открыть профиль</Link></section>;
-  return <section className="account-card sign-in-card"><span className="eyebrow">СОЗДАТЬ АККАУНТ</span><h1>Начни свой путь в KiraQuest</h1><p>Прогресс, XP, настройки и маскот будут сохраняться в аккаунте и станут доступны после повторного входа.</p><PasswordSignIn mode="sign-up" /><p className="account-note">Почта нового аккаунта пока не подтверждается. Не используй пароль от почты.</p><Link href="/" className="text-button">Продолжить как гость</Link></section>;
+  return <section className="account-card sign-in-card"><span className="eyebrow">СОЗДАТЬ АККАУНТ</span><h1>Начни свой путь в KiraQuest</h1><p>Прогресс, XP, настройки и маскот будут сохраняться в аккаунте и станут доступны после повторного входа.</p><Link href="/register" className="button button-primary">Зарегистрироваться</Link><Link href="/" className="text-button">Продолжить как гость</Link></section>;
 }
