@@ -214,7 +214,7 @@ html[data-visual-style="retro-desktop"] :is(.home-hero, .home-next-card, .home-c
   background:var(--accent);
   pointer-events:none;
 }
-html[data-visual-style="retro-desktop"] :is(.sidebar, .topbar, .app-footer, .side-note) { background:var(--surface); border-color:var(--line); color:var(--ink); }
+html[data-visual-style="retro-desktop"] :is(.sidebar, .topbar, .app-footer) { background:var(--surface); border-color:var(--line); color:var(--ink); }
 html[data-visual-style="retro-desktop"] .topbar { border-top:4px solid var(--accent); }
 html[data-visual-style="retro-desktop"] .sidebar { box-shadow:inset -1px 0 0 var(--retro-dark-edge); }
 html[data-visual-style="retro-desktop"] :is(.button, .nav-item, .theme-choice, .theme-mode-options button, .background-grid button, .accent-mode button, .accessory-grid button, .studio-mascot-list button, .visual-style-options button, .stage-link, .journey-node:not(.topic-node), .lesson-answer-option, .lesson-dialog-close, .modal-close, .theme-toggle, .studio-tabs button, input:not([type="checkbox"]):not([type="range"]):not([type="color"]), select, textarea) {

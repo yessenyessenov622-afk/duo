@@ -27,10 +27,6 @@ export function SiteShell({ children }: SiteShellProps) {
         <div className="side-label">ТВОЁ ПРОСТРАНСТВО</div>
         <Navigation />
         <div className="sidebar-bottom">
-          <div className="side-note">
-            <span className="note-spark" aria-hidden="true">✦</span>
-            <p>Большие открытия начинаются с одного маленького шага.</p>
-          </div>
           <div className="local-badge">
             <span className="status-dot" aria-hidden="true" />
             <AccountStatus />
