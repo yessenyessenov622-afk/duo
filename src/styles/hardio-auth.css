@@ -95,7 +95,7 @@
 .hardio-auth-card .google-sign-in { justify-items: stretch; }
 .hardio-auth-card .google-button { width: 100%; }
 .hardio-switch-auth { margin-top: 1.2rem; color: var(--ink); font-size: .92rem; line-height: 1.5; }
-.hardio-switch-link { display: inline-block; padding: .35rem; color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: .15em; }
+.hardio-switch-link { display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; padding: .35rem; color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: .15em; }
 .hardio-error { margin: 0 0 1rem; padding: .8rem; background: var(--state-error-bg); color: var(--state-error-ink); border: 1px solid currentColor; border-radius: var(--style-control-radius, 12px); font-size: .9rem; line-height: 1.5; text-align: left; }
 
 html[data-visual-style="pixel-art"] .hardio-auth-card,

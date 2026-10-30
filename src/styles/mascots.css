@@ -72,7 +72,7 @@ html[data-motion-intensity="high"] .mascot-avatar .mascot-eyes{animation-duratio
 .mascot-gallery-copy blockquote{margin:6px 0 10px;color:var(--accent);font-size:.875rem;line-height:1.5;font-style:italic}
 .mascot-gallery-actions{display:grid;gap:8px;margin-top:auto}
 .mascot-gallery-actions .button{width:100%;min-height:44px;font-size:.875rem}
-.mascot-reaction-button{min-height:40px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font-size:.8125rem;font-weight:700;cursor:pointer}
+.mascot-reaction-button{min-height:44px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font-size:.8125rem;font-weight:700;cursor:pointer}
 .mascot-reaction-button:hover{border-color:var(--accent);background:var(--accent-soft)}
 
 @keyframes mascot-tail-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(10deg)}}
@@ -98,7 +98,7 @@ html[data-motion-intensity="high"] .mascot-avatar .mascot-eyes{animation-duratio
 .lesson-skill-outcome b{display:block;margin-bottom:4px;color:var(--accent)}
 .lesson-result-card .lesson-skill-outcome{max-width:550px;margin:15px auto;text-align:left}
 .lesson-result-mascot{width:88px;height:88px;margin:12px auto}
-.lesson-hint-button{display:block;margin-top:8px;padding:0;border:0;background:transparent;color:var(--accent);font-size:.8125rem;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.lesson-hint-button{display:block;min-height:44px;margin-top:8px;padding:0;border:0;background:transparent;color:var(--accent);font-size:.8125rem;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .lesson-hint-copy{max-width:44rem;margin:7px 0 0;color:var(--muted);font-size:.8125rem;line-height:1.55}
 .lesson-question-footer>div{min-width:0}
 .home-learning-path{display:grid;grid-template-columns:minmax(0,1fr) 190px;align-items:center;gap:20px;padding:28px 32px}
@@ -117,7 +117,7 @@ html[data-theme] .course-catalog>header .eyebrow,html[data-theme] .lessons-page-
 .lessons-page-heading h1{font-weight:800;line-height:1.2}
 html[data-theme] .lessons-page-heading .lead{color:var(--ink);font-size:1rem;font-weight:400;line-height:1.6}
 .course-catalog-card .eyebrow{margin:0 0 3px;color:var(--course-accent)}
-.course-catalog-card .button{min-height:42px}
+.course-catalog-card .button{min-height:44px}
 .learner-profile{display:grid;gap:16px}
 .profile-mascot{width:100px;height:100px}
 .profile-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}

@@ -87,9 +87,10 @@ export function HardioAuthCard({ mode }: { mode: "register" | "sign-in" }) {
       if (!account.passwordConfigured || window.location.protocol !== "https:") {
         throw new Error("Вход по паролю недоступен.");
       }
+      const byUsername = !isRegister && !emailOrLogin.includes("@");
       await accountRequest(
-        isRegister ? "/api/auth/sign-up/email" : "/api/auth/sign-in/email",
-        { method: "POST", body: JSON.stringify({ email: emailOrLogin, password, ...(isRegister ? { username } : {}) }) }
+        isRegister ? "/api/auth/sign-up/email" : byUsername ? "/api/auth/sign-in/username" : "/api/auth/sign-in/email",
+        { method: "POST", body: JSON.stringify(byUsername ? { username: emailOrLogin, password } : { email: emailOrLogin, password, ...(isRegister ? { username } : {}) }) }
       );
       setPassword("");
       setConfirmPassword("");
@@ -99,7 +100,8 @@ export function HardioAuthCard({ mode }: { mode: "register" | "sign-in" }) {
         return;
       }
       await account.refresh();
-      router.push("/profile");
+      const owner = await accountRequest<{ owner: boolean }>("/api/admin/status").catch(() => ({ owner: false }));
+      router.push(owner.owner ? "/admin" : "/profile");
     } catch (err) {
       setPassword("");
       setConfirmPassword("");
@@ -186,7 +188,7 @@ export function HardioAuthCard({ mode }: { mode: "register" | "sign-in" }) {
 
           <div className="hardio-field">
             <label htmlFor="hardio-email" className="hardio-field-label">
-              Электронная почта
+              {isRegister ? "Электронная почта" : "Электронная почта или логин"}
             </label>
             <div className="hardio-input-wrapper">
               <span className="hardio-input-icon">
@@ -194,9 +196,9 @@ export function HardioAuthCard({ mode }: { mode: "register" | "sign-in" }) {
               </span>
               <input
                 id="hardio-email"
-                autoComplete="email"
+                autoComplete={isRegister ? "email" : "username"}
                 maxLength={254}
-                type="email"
+                type={isRegister ? "email" : "text"}
                 className="hardio-input"
                 placeholder="name@example.com"
                 value={emailOrLogin}

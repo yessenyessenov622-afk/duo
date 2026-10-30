@@ -2,6 +2,7 @@ import { authConfiguration, getAuth, hasPasswordCredential, hasPasswordResetCred
 import { ApiError, apiError, assertSameOrigin, PRIVATE_HEADERS, readJson } from "@/src/server/http";
 import { getPool } from "@/src/server/db";
 import { createHmac } from "node:crypto";
+import { isOwnerAlias, isReservedUsername, OWNER_USERNAME } from "@/src/lib/owner-login";
 
 function privateResponse(response: Response): Response {
   const headers = new Headers(response.headers);
@@ -62,8 +63,10 @@ async function POST(request: Request) {
       const signup = path === "/api/auth/sign-up/email";
       const byUsername = path === "/api/auth/sign-in/username";
       const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
-      const username = typeof input.username === "string" ? input.username.trim() : "";
+      const suppliedUsername = typeof input.username === "string" ? input.username.trim() : "";
+      const username = byUsername && isOwnerAlias(suppliedUsername) ? OWNER_USERNAME : suppliedUsername;
       const password = input.password;
+      if (signup && isReservedUsername(username)) throw new ApiError(400, "reserved_username", "Этот ник зарезервирован. Выберите другой.");
       if ((!byUsername && (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) || ((signup || byUsername) && !/^[a-zA-Z0-9_]{3,30}$/.test(username)) || typeof password !== "string" || password.length < 12 || password.length > 128) throw new ApiError(400, "invalid_credentials", "Проверь данные: ник — от 3 до 30 латинских букв, цифр или _, пароль — от 12 до 128 символов.");
       const digest = createHmac("sha256", config.secret).update(`password-limit:${byUsername ? username.toLowerCase() : email}`).digest("hex");
       const claimed = await poolForRequest().query("INSERT INTO kiraquest_password_limits (address_hash, window_start, attempts) VALUES ($1, CURRENT_TIMESTAMP, 1) ON CONFLICT (address_hash) DO UPDATE SET window_start = CASE WHEN kiraquest_password_limits.window_start <= CURRENT_TIMESTAMP - INTERVAL '15 minutes' THEN CURRENT_TIMESTAMP ELSE kiraquest_password_limits.window_start END, attempts = CASE WHEN kiraquest_password_limits.window_start <= CURRENT_TIMESTAMP - INTERVAL '15 minutes' THEN 1 ELSE kiraquest_password_limits.attempts + 1 END WHERE kiraquest_password_limits.window_start <= CURRENT_TIMESTAMP - INTERVAL '15 minutes' OR kiraquest_password_limits.attempts < 10 RETURNING address_hash", [digest]);

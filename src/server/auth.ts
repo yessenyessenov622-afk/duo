@@ -101,7 +101,7 @@ export function createAuth(config: AuthConfiguration, database: Pool, sendOtp = 
       storage: "database",
       window: 60,
       max: 100,
-      customRules: { "/sign-in/social": { window: 60, max: 10 }, "/sign-in/email": { window: 60, max: 5 }, "/sign-in/username": { window: 60, max: 5 }, "/sign-up/email": { window: 60, max: 5 } },
+      customRules: { "/sign-in/social": { window: 60, max: 10 }, "/sign-in/email": { window: 60, max: 5 }, "/sign-in/username": { window: 60, max: 5 }, "/sign-up/email": { window: 60, max: 5 }, "/change-password": { window: 60, max: 5 } },
     },
     telemetry: { enabled: false },
     logger: { disabled: true },

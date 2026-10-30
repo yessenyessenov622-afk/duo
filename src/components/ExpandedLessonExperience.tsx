@@ -8,6 +8,7 @@ import { statusForLesson } from "@/src/lib/learning-progress";
 import { useLearningProgress } from "@/src/components/LearningProgressProvider";
 import { useCustomization } from "@/src/components/CustomizationProvider";
 import { MascotAvatar } from "@/src/components/MascotAvatar";
+import { accountRequest, useAccount } from "@/src/components/AccountProvider";
 
 const normalizeAnswer = (value: string) => value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("ru");
 
@@ -17,6 +18,7 @@ export function ExpandedLessonExperience({ lessonId }: { lessonId: string }) {
   const { course, chapter, lesson } = match;
   const { progress, ready, warning, startLesson, recordAnswer, completeLesson } = useLearningProgress();
   const { settings } = useCustomization();
+  const account = useAccount();
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [order, setOrder] = useState<string[]>([]);
@@ -27,6 +29,9 @@ export function ExpandedLessonExperience({ lessonId }: { lessonId: string }) {
   const [hintOpen, setHintOpen] = useState(false);
   const [readerMode, setReaderMode] = useState(false);
   const [result, setResult] = useState<{ awarded: boolean } | null>(null);
+  const [verificationError, setVerificationError] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const verifiedAnswers = useRef<unknown[]>([]);
   const started = useRef(false);
   const finishing = useRef(false);
   const task = lessonContent.tasks[index];
@@ -45,12 +50,19 @@ export function ExpandedLessonExperience({ lessonId }: { lessonId: string }) {
       : task.type === "text"
         ? (task.accepted ?? [task.answer as string]).some((item) => normalizeAnswer(item) === normalizeAnswer(answer))
         : answer === task.answer;
-    if (recordAnswer(lessonId, isCorrect)) { setCorrect(isCorrect); setChecked(true); }
+    if (recordAnswer(lessonId, isCorrect)) { if (isCorrect) verifiedAnswers.current[index] = structuredClone(task.type === "budget" ? budget : task.type === "schedule" ? starts : task.type === "order" ? order : answer); setCorrect(isCorrect); setChecked(true); }
   };
-  const next = () => {
+  const next = async () => {
     if (!checked || !correct || finishing.current) return;
     if (index < lessonContent.tasks.length - 1) { setIndex(index + 1); return; }
     finishing.current = true;
+    setVerificationError("");
+    if (account.user) {
+      setVerifying(true);
+      try { await accountRequest("/api/lessons/verify", { method: "POST", body: JSON.stringify({ lessonId, answers: verifiedAnswers.current }) }, account.user.id); }
+      catch (error) { setVerificationError(error instanceof Error ? error.message : "Не удалось подтвердить урок. Попробуй ещё раз."); finishing.current = false; setVerifying(false); return; }
+      setVerifying(false);
+    }
     const completion = completeLesson(lessonId);
     if (completion.ok) setResult({ awarded: completion.awarded });
     else finishing.current = false;
@@ -64,12 +76,12 @@ export function ExpandedLessonExperience({ lessonId }: { lessonId: string }) {
 
   if (!ready) return <p role="status">Загружаем урок…</p>;
   if (status === "locked") return <section className="lesson-blocked"><div><h2>Этот урок пока закрыт</h2><p>Сначала пройди предыдущий открытый шаг.</p><Link href="/map" className="button button-dark">Открыть карту</Link></div></section>;
-  if (result) return <section className="lesson-result-card"><span className="lesson-result-seal earned" aria-hidden="true">✦</span><span className="eyebrow">УРОК ЗАВЕРШЁН</span><h1>Отличная работа!</h1><p>{result.awarded ? `Все ${lessonContent.tasks.length} заданий пройдены — +${XP_PER_LESSON} XP.` : "Повторение завершено. Опыт за этот урок уже был получен."}</p><MascotAvatar id={settings.mascot.id} accessory={settings.mascot.accessory} className="lesson-result-mascot" state="celebrate"/><div className="lesson-result-facts"><span>Всего XP <b>{progress.xp}</b></span><span>Уроков пройдено <b>{progress.completedLessons.length}</b></span></div><Link className="button button-dark" href="/map">Продолжить по карте →</Link></section>;
+  if (result) return <section className="lesson-result-card"><span className="lesson-result-seal earned" aria-hidden="true">✦</span><span className="eyebrow">УРОК ЗАВЕРШЁН</span><h1>Отличная работа!</h1><p>{result.awarded ? `Все ${lessonContent.tasks.length} заданий пройдены — +🌿 ${XP_PER_LESSON} мяты.` : "Повторение завершено. Мята за этот урок уже была получена."}</p><MascotAvatar id={settings.mascot.id} accessory={settings.mascot.accessory} className="lesson-result-mascot" state="celebrate"/><div className="lesson-result-facts"><span>Всего мяты <b>🌿 {progress.xp}</b></span><span>Уроков пройдено <b>{progress.completedLessons.length}</b></span></div><Link className="button button-dark" href="/map">Продолжить по карте →</Link></section>;
 
   return <section className="lesson-workspace expanded-lesson">
     <div className="lesson-flow-top"><Link href="/map" className="lesson-back-link">← Вернуться к карте</Link><span>{course.title} / {chapter.title}</span><button type="button" className="reader-mode-toggle" aria-pressed={readerMode} onClick={() => setReaderMode(!readerMode)}>{readerMode ? "Выйти из режима чтения" : "Режим чтения"}</button></div>
     {warning && <p className="map-warning" role="alert">{warning}</p>}
-    <div className="lesson-session-heading"><div><span className="eyebrow">УРОВЕНЬ {lessonContent.level} · {chapter.title}</span><h1>{lesson.title}</h1><p>{XP_PER_LESSON} XP за первое прохождение</p></div><div className="lesson-progress-orb"><b>{index + 1}/{lessonContent.tasks.length}</b><small>заданий</small></div></div>
+    <div className="lesson-session-heading"><div><span className="eyebrow">УРОВЕНЬ {lessonContent.level} · {chapter.title}</span><h1>{lesson.title}</h1><p>🌿 {XP_PER_LESSON} мяты за первое прохождение</p></div><div className="lesson-progress-orb"><b>{index + 1}/{lessonContent.tasks.length}</b><small>заданий</small></div></div>
     <section className="lesson-question-card lesson-material" aria-labelledby="lesson-material-title"><span className="eyebrow">ПЕРЕД ПРАКТИКОЙ</span><h2 id="lesson-material-title">Разберём тему</h2>{lessonContent.introduction.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}<p><b>Пример</b></p><pre>{lessonContent.example}</pre></section>
     <div className="lesson-question-card"><div className="lesson-instruction"><MascotAvatar id={settings.mascot.id} accessory={settings.mascot.accessory} className="lesson-guide" state={checked ? correct ? "correct" : "support" : hintOpen ? "thinking" : "idle"}/><span>Отвечай в своём темпе. Если ошибёшься, можно попробовать ещё раз.</span></div>
       <div className="expanded-progress"><span>Задание {index + 1} из {lessonContent.tasks.length}</span><progress value={index} max={lessonContent.tasks.length} aria-label="Прогресс урока" /></div>
@@ -80,8 +92,9 @@ export function ExpandedLessonExperience({ lessonId }: { lessonId: string }) {
       {task.type === "budget" && task.budget && <fieldset className="mechanic-fieldset"><legend>Учебный бюджет: {task.budget.total.toLocaleString("ru-RU")} ₸</legend><div className="budget-allocation-list">{task.budget.allocations.map((item) => <label className="budget-allocation-row" key={item.id}><span>{item.label}</span><span className="budget-input-wrap"><input type="number" min="0" step="1000" inputMode="numeric" value={budget[item.id] ?? 0} disabled={checked && correct} aria-label={`${item.label}, тенге`} onChange={(event) => { setBudget((current) => ({ ...current, [item.id]: Math.max(0, Number(event.target.value) || 0) })); setChecked(false); }} /><span>₸</span></span></label>)}</div><output className="budget-balance" aria-live="polite">Остаток: {(task.budget.total - task.budget.allocations.reduce((sum, item) => sum + (budget[item.id] ?? 0), 0)).toLocaleString("ru-RU")} ₸</output></fieldset>}
       {task.type === "schedule" && task.schedule && <fieldset className="mechanic-fieldset"><legend>Время начала дел</legend><div className="schedule-event-list">{task.schedule.events.map((event) => <label className="schedule-event-row" key={event.id}><span>{event.title}</span><select value={starts[event.id] ?? event.initialStart} disabled={checked && correct} aria-label={`Время начала: ${event.title}`} onChange={(input) => { setStarts((current) => ({ ...current, [event.id]: Number(input.target.value) })); setChecked(false); }}>{Array.from({length: Math.floor((task.schedule!.dayEnd - event.duration - task.schedule!.dayStart) / 30) + 1}, (_, i) => task.schedule!.dayStart + i * 30).map((minute) => <option key={minute} value={minute}>{`${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`}</option>)}</select></label>)}</div></fieldset>}
       {checked && <div className={`lesson-answer-explanation${correct ? " explanation-correct" : " explanation-retry"}`} role="status"><b>{correct ? "Верно!" : "Пока не получилось. Попробуй ещё раз."}</b><p>{task.explanation}</p></div>}
-      <div className="lesson-question-footer"><div><span>Награда начисляется только при первом завершении.</span><button type="button" className="lesson-hint-button" aria-expanded={hintOpen} onClick={() => setHintOpen(!hintOpen)}>{hintOpen ? "Скрыть подсказку" : "Попросить подсказку"}</button>{hintOpen && <p className="lesson-hint-copy">{task.hint}</p>}</div>{checked && correct ? <button type="button" className="button button-dark" onClick={next}>{index === lessonContent.tasks.length - 1 ? "Завершить урок" : "Следующее задание"} →</button> : <button type="button" className="button button-dark" disabled={(task.type === "text" || task.type === "choice") && !answer.trim()} onClick={check}>Проверить ответ →</button>}</div>
+      {verificationError && <p role="alert">{verificationError}</p>}
+      <div className="lesson-question-footer"><div><span>Награда начисляется только при первом завершении.</span><button type="button" className="lesson-hint-button" aria-expanded={hintOpen} onClick={() => setHintOpen(!hintOpen)}>{hintOpen ? "Скрыть подсказку" : "Попросить подсказку"}</button>{hintOpen && <p className="lesson-hint-copy">{task.hint}</p>}</div>{checked && correct ? <button type="button" className="button button-dark" disabled={verifying} onClick={() => void next()}>{verifying ? "Проверяем…" : index === lessonContent.tasks.length - 1 ? "Завершить урок" : "Следующее задание"} →</button> : <button type="button" className="button button-dark" disabled={(task.type === "text" || task.type === "choice") && !answer.trim()} onClick={check}>Проверить ответ →</button>}</div>
     </div>
-    {status === "completed" && <p className="lesson-repeat-note">Урок уже пройден: повторение не начислит XP повторно.</p>}
+    {status === "completed" && <p className="lesson-repeat-note">Урок уже пройден: повторение не начислит мяту повторно.</p>}
   </section>;
 }

@@ -7,6 +7,7 @@ import { CustomizationProvider } from "@/src/components/CustomizationProvider";
 import { LearningProgressProvider } from "@/src/components/LearningProgressProvider";
 import { AccountProvider } from "@/src/components/AccountProvider";
 import { AccountBoundary, AccountStatus } from "@/src/components/AccountBoundary";
+import { ActivityTracker } from "@/src/components/ActivityTracker";
 
 type SiteShellProps = {
   children: ReactNode;
@@ -16,6 +17,7 @@ export function SiteShell({ children }: SiteShellProps) {
   return (
     <AccountProvider><CustomizationProvider>
     <LearningProgressProvider>
+    <ActivityTracker />
     <div className="app-shell">
       <aside className="sidebar" aria-label="Главная навигация">
         <Link className="brand" href="/" aria-label={`${APP_NAME} — на главную`}>
@@ -41,6 +43,7 @@ export function SiteShell({ children }: SiteShellProps) {
         <footer className="app-footer">
           <span>{APP_NAME}</span>
           <span>Учись в своём ритме <span className="footer-heart">✦</span></span>
+          <span>Мы учитываем посещения и примерное активное время уроков; гостевые посещения считаются отдельно.</span>
         </footer>
       </div>
     </div>

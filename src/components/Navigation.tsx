@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import type { NavigationItem } from "@/src/types/navigation";
 import { AppIcon, type AppIconName } from "@/src/components/AppIcon";
 import { RetroIcon } from "@/src/components/RetroIcon";
 import { useCustomization } from "@/src/components/CustomizationProvider";
+import { accountRequest, useAccount } from "@/src/components/AccountProvider";
 
 const navigationItems: (NavigationItem & { icon: AppIconName })[] = [
   { href: "/", label: "Обзор", icon: "home" },
@@ -14,17 +16,27 @@ const navigationItems: (NavigationItem & { icon: AppIconName })[] = [
   { href: "/mascots", label: "Маскоты", icon: "mascots" },
   { href: "/studio", label: "Студия", icon: "studio" },
   { href: "/profile", label: "Профиль", icon: "profile" },
+  { href: "/reviews", label: "Отзывы", icon: "reviews" },
+  { href: "/rankings", label: "Рейтинги", icon: "map" },
 ];
 
 export function Navigation() {
   const pathname = usePathname();
   const { settings } = useCustomization();
+  const account = useAccount();
+  const [owner, setOwner] = useState(false);
+  useEffect(() => {
+    if (!account.user || account.status !== "ready") { setOwner(false); return; }
+    const controller = new AbortController();
+    void accountRequest<{ owner: boolean }>("/api/admin/status", { signal: controller.signal }, account.user.id).then(result => { if (!controller.signal.aborted) setOwner(result.owner); }).catch(() => { if (!controller.signal.aborted) setOwner(false); });
+    return () => controller.abort();
+  }, [account.user?.id, account.status]);
   const retro = settings.visualStyle === "retro-desktop";
   const pixelIcons = retro || settings.visualStyle === "pixel-art";
 
   return (
     <nav className="side-nav" aria-label="Разделы KiraQuest">
-      {navigationItems.map((item) => {
+      {[...navigationItems, ...(owner ? [{ href: "/admin", label: "Админ", icon: "admin" as const }] : [])].map((item) => {
         const isActive = pathname === item.href;
         const label = retro
           ? item.href === "/lessons" ? "Библиотека курсов" : item.href === "/profile" ? "Карточка ученика" : item.href === "/studio" ? "Панель оформления" : item.label
